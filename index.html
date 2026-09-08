@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TechKeey — Problem &amp; Solution Registration</title>
+<style>
+  :root {
+    --bg: #f6f4ee;
+    --bg-card: #ffffff;
+    --bg-soft: #efece2;
+    --ink: #1b1d1a;
+    --ink-muted: #5c5f59;
+    --ink-faint: #9a9c93;
+    --charcoal: #14171a;
+    --charcoal-soft: #23282c;
+    --accent: #0f7a5c;
+    --accent-deep: #0b5c45;
+    --accent-soft: rgba(15, 122, 92, 0.10);
+    --accent-glow: rgba(15, 122, 92, 0.28);
+    --border: #e2ded2;
+    --border-strong: #d3cebc;
+    --danger: #b3453f;
+    --radius-lg: 20px;
+    --radius-md: 13px;
+    --shadow-soft: 0 10px 28px -14px rgba(20,23,20,0.16);
+    --shadow-card: 0 26px 60px -22px rgba(20,23,20,0.24);
+    --shadow-lift: 0 26px 60px -18px rgba(15,122,92,0.30);
+    --font: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+  /* ============ TOPBAR ============ */
+  .topbar { padding: 26px 0 0; }
+  .topbar-inner { display: flex; align-items: center; justify-content: center; }
+  .wordmark { font-size: 19px; font-weight: 800; color: var(--ink); letter-spacing: 0.01em; }
+  .wordmark .accent { color: var(--accent-deep); }
+
+  /* ============ HERO ============ */
+  .hero {
+    background: linear-gradient(165deg, var(--charcoal), var(--charcoal-soft));
+    border-radius: var(--radius-lg);
+    margin: 24px 0 20px;
+    padding: 70px 40px 60px;
+    text-align: center;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 85% 0%, rgba(15,122,92,0.22), transparent 55%);
+    pointer-events: none;
+  }
+  .hero-eyebrow { color: #7fd9b8; font-size: 12.5px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 700; margin-bottom: 16px; }
+  .hero-title { color: #faf9f4; font-size: clamp(30px, 4.6vw, 50px); font-weight: 800; line-height: 1.12; margin: 0 0 20px; }
+  .hero-title .accent { color: #7fd9b8; }
+  .hero-text { color: #c7c9c2; font-size: clamp(14.5px, 1.8vw, 16.5px); max-width: 580px; margin: 0 auto; line-height: 1.7; }
+
+  /* ============ HOW IT WORKS ============ */
+  .how-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 0 0 50px; }
+  .how-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 26px 22px; box-shadow: var(--shadow-soft);
+  }
+  .how-num { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; color: var(--accent-deep); margin-bottom: 10px; }
+  .how-title { font-size: 18px; font-weight: 800; margin: 0 0 6px; color: var(--ink); }
+  .how-desc { font-size: 14px; color: var(--ink-muted); line-height: 1.55; margin: 0; }
+
+  /* ============ SECTION SHELL ============ */
+  .section-block { margin-bottom: 44px; }
+  .section-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 42px 38px; box-shadow: var(--shadow-card);
+  }
+  .section-head { margin-bottom: 30px; }
+  .section-eyebrow { font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-deep); margin-bottom: 10px; }
+  .section-title { font-size: clamp(22px, 2.8vw, 28px); font-weight: 800; margin: 0 0 8px; color: var(--ink); }
+  .section-sub { font-size: 14.5px; color: var(--ink-muted); margin: 0; max-width: 620px; line-height: 1.6; }
+
+  /* ============ BEFORE YOU BEGIN ============ */
+  .info-panel {
+    background: var(--accent-soft); border: 1px solid rgba(15,122,92,0.25); border-radius: var(--radius-md);
+    padding: 26px 28px; margin-bottom: 44px;
+  }
+  .info-panel h3 { margin: 0 0 10px; font-size: 17px; font-weight: 800; color: var(--accent-deep); }
+  .info-panel p, .info-panel li { font-size: 14px; color: var(--ink-muted); line-height: 1.65; margin: 0 0 6px; }
+  .info-panel ul { margin: 8px 0 0; padding-left: 20px; }
+  .info-panel strong { color: var(--ink); }
+
+  /* ============ ROLE CARDS ============ */
+  .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .role-card {
+    background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius-lg);
+    padding: 34px 28px; cursor: pointer; transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.25s ease;
+    transform: perspective(1100px) translateY(0) rotateX(0deg);
+    box-shadow: var(--shadow-soft);
+  }
+  .role-card:hover { transform: perspective(1100px) translateY(-5px) rotateX(1deg); box-shadow: var(--shadow-card); border-color: var(--border-strong); }
+  .role-card.selected { border-color: var(--accent); box-shadow: var(--shadow-lift); background: linear-gradient(180deg, var(--accent-soft), transparent 60%), var(--bg-card); }
+  .role-icon {
+    width: 54px; height: 54px; border-radius: 50%; background: var(--bg-soft); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 18px; transition: all 0.3s ease;
+  }
+  .role-card.selected .role-icon { background: var(--accent-soft); border-color: var(--accent); }
+  .role-icon svg { width: 25px; height: 25px; stroke: var(--ink-muted); transition: stroke 0.3s ease; }
+  .role-card.selected .role-icon svg { stroke: var(--accent-deep); }
+  .role-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; color: var(--ink); }
+  .role-desc { font-size: 13.5px; color: var(--ink-muted); line-height: 1.55; }
+
+  /* ============ FIELDS ============ */
+  .field { margin-bottom: 24px; }
+  .field:last-child { margin-bottom: 0; }
+  label.field-label { display: block; font-size: 14px; font-weight: 700; color: var(--charcoal-soft); margin-bottom: 9px; }
+  label.field-label .req { color: var(--accent-deep); margin-left: 3px; }
+
+  input[type="text"], input[type="email"], input[type="tel"], textarea {
+    width: 100%; background: #fdfcf9; border: 1.5px solid var(--border-strong); color: var(--ink);
+    font-family: inherit; font-size: 16px; padding: 15px 17px; border-radius: var(--radius-md);
+    outline: none; min-height: 54px; transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  input::placeholder, textarea::placeholder { color: var(--ink-faint); }
+  input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  input.invalid, textarea.invalid { border-color: var(--danger); }
+  textarea { resize: vertical; min-height: 100px; line-height: 1.6; }
+  textarea.challenge-textarea { min-height: 70px; }
+  textarea.solution-textarea { min-height: 160px; }
+
+  .char-counter { text-align: right; font-size: 12px; color: var(--ink-faint); margin-top: 7px; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .char-counter.warn { color: var(--accent-deep); }
+  .char-counter.limit { color: var(--danger); }
+
+  .error-msg { color: var(--danger); font-size: 12.5px; margin-top: 7px; display: none; font-weight: 600; }
+  .error-msg.show { display: block; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+  .year-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .year-pill {
+    text-align: center; padding: 15px 8px; border-radius: var(--radius-md); border: 1.5px solid var(--border-strong);
+    background: #fdfcf9; cursor: pointer; font-weight: 700; font-size: 14px; color: var(--charcoal-soft);
+    transition: all 0.22s ease;
+  }
+  .year-pill:hover { border-color: var(--accent-deep); transform: translateY(-2px); }
+  .year-pill.selected { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-deep); box-shadow: 0 8px 20px -10px rgba(15,122,92,0.4); transform: translateY(-2px); }
+
+  /* ============ CHALLENGE BLOCKS ============ */
+  #challenges-container { display: flex; flex-direction: column; gap: 22px; margin-bottom: 22px; }
+  .challenge-block {
+    background: var(--bg-soft); border: 1.5px solid var(--border); border-radius: var(--radius-md);
+    padding: 28px 26px; position: relative; animation: blockIn 0.35s var(--ease);
+  }
+  @keyframes blockIn { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .challenge-block-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .challenge-label { font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-deep); }
+  .remove-challenge-btn {
+    font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--danger); background: transparent;
+    border: 1px solid rgba(179,69,63,0.35); padding: 7px 14px; border-radius: 999px; cursor: pointer; transition: all 0.2s ease;
+  }
+  .remove-challenge-btn:hover { background: rgba(179,69,63,0.08); border-color: var(--danger); }
+
+  .add-challenge-btn {
+    font-family: inherit; font-size: 15px; font-weight: 700; color: var(--accent-deep); background: var(--accent-soft);
+    border: 1.5px dashed var(--accent); padding: 15px 20px; border-radius: var(--radius-md); cursor: pointer;
+    width: 100%; text-align: center; transition: all 0.22s ease;
+  }
+  .add-challenge-btn:hover { background: rgba(15,122,92,0.16); }
+
+  .top-error-banner {
+    background: rgba(179,69,63,0.08); border: 1px solid var(--danger); color: #8f3b35; border-radius: var(--radius-md);
+    padding: 14px 18px; font-size: 14px; margin-bottom: 24px; display: none; font-weight: 600;
+  }
+  .top-error-banner.show { display: block; }
+
+  /* ============ BUTTONS ============ */
+  .btn {
+    font-family: inherit; font-size: 16px; font-weight: 700; padding: 17px 36px; border-radius: 999px;
+    border: 1px solid transparent; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.25s ease, opacity 0.2s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-primary { background: linear-gradient(180deg, #159372, var(--accent)); color: #fff; box-shadow: 0 14px 30px -12px rgba(15,122,92,0.5); }
+  .btn-primary:hover:not(:disabled) { box-shadow: 0 18px 40px -12px rgba(15,122,92,0.6); transform: translateY(-1px); }
+  .btn-secondary { background: transparent; color: var(--ink-muted); border: 1px solid var(--border-strong); }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--charcoal-soft); color: var(--ink); }
+  .btn-row { display: flex; justify-content: flex-end; gap: 14px; margin-top: 10px; }
+  .btn-row.split { justify-content: space-between; }
+
+  /* ============ REVIEW ============ */
+  #review-section { display: none; }
+  .review-card { background: #fdfcf9; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px 26px; margin-bottom: 18px; box-shadow: var(--shadow-soft); }
+  .review-card:last-child { margin-bottom: 0; }
+  .review-heading { font-size: 12px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--accent-deep); font-weight: 800; margin: 0 0 15px; display: flex; align-items: center; gap: 10px; }
+  .review-heading::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+  .review-row { display: flex; justify-content: space-between; gap: 18px; padding: 9px 0; border-bottom: 1px dashed var(--border); font-size: 14.5px; }
+  .review-row:last-child { border-bottom: none; }
+  .review-key { color: var(--ink-faint); flex-shrink: 0; font-weight: 600; }
+  .review-val { color: var(--ink); text-align: right; word-break: break-word; font-weight: 600; }
+  .review-pair { margin-bottom: 18px; }
+  .review-pair:last-child { margin-bottom: 0; }
+  .review-pair-label { font-size: 12.5px; font-weight: 800; color: var(--accent-deep); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .review-block-val { background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 16px; font-size: 14.5px; line-height: 1.6; color: var(--ink); white-space: pre-wrap; word-break: break-word; margin-bottom: 10px; }
+  .review-solution-label { font-size: 12px; font-weight: 700; color: var(--ink-muted); margin-bottom: 6px; }
+
+  /* ============ SUCCESS ============ */
+  #success-section { display: none; }
+  .success-shell {
+    background: linear-gradient(165deg, var(--charcoal), var(--charcoal-soft)); border-radius: var(--radius-lg);
+    padding: 60px 40px; text-align: center; box-shadow: var(--shadow-card); position: relative; overflow: hidden;
+  }
+  .success-shell::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 20% 100%, rgba(15,122,92,0.22), transparent 55%); pointer-events: none; }
+  .success-icon {
+    width: 80px; height: 80px; margin: 0 auto 24px; border-radius: 50%; background: radial-gradient(circle, rgba(15,122,92,0.3), transparent 70%);
+    display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--accent); animation: popIn 0.5s var(--ease);
+  }
+  @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .success-icon svg { width: 36px; height: 36px; stroke: #7fd9b8; }
+  .success-title { color: #faf9f4; font-size: clamp(24px, 3.3vw, 34px); font-weight: 800; margin: 0 0 10px; }
+  .success-text { color: #c7c9c2; font-size: 15px; max-width: 440px; margin: 0 auto 30px; line-height: 1.6; }
+  .tracking-card { background: rgba(255,255,255,0.06); border: 1px solid var(--accent); border-radius: var(--radius-lg); padding: 28px 36px; display: inline-block; box-shadow: 0 20px 50px -18px rgba(15,122,92,0.35); }
+  .tracking-label { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.12em; color: #7fd9b8; font-weight: 800; margin-bottom: 10px; }
+  .tracking-value { font-size: clamp(22px, 3.6vw, 32px); font-weight: 800; color: #faf9f4; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; margin-bottom: 14px; }
+  .copy-btn { font-family: inherit; font-size: 13px; font-weight: 700; background: transparent; border: 1px solid rgba(250,249,244,0.35); color: #faf9f4; padding: 9px 18px; border-radius: 999px; cursor: pointer; transition: all 0.2s ease; }
+  .copy-btn:hover { border-color: #7fd9b8; color: #7fd9b8; }
+  .copy-btn.copied { border-color: #7fd9b8; color: #7fd9b8; }
+  .success-note { color: #9a9d97; font-size: 12.5px; margin: 20px 0 6px; }
+
+  .process-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 30px 0 6px; flex-wrap: wrap; }
+  .process-step { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #d8d9d3; font-size: 12.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; }
+  .process-arrow { color: #6b6f68; font-size: 14px; }
+
+  .after-note { color: #c7c9c2; font-size: 13.5px; max-width: 520px; margin: 22px auto 0; line-height: 1.65; }
+
+  .spinner { width: 17px; height: 17px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .footer-note { text-align: center; color: var(--ink-faint); font-size: 12px; margin: 40px 0 24px; }
+  .footer-note .accent { color: var(--accent-deep); font-weight: 700; }
+
+  @media (max-width: 860px) {
+    .how-grid { grid-template-columns: 1fr; }
+    .section-card { padding: 32px 24px; }
+    .hero { padding: 52px 26px 46px; }
+  }
+  @media (max-width: 640px) {
+    .wrap { padding: 0 16px; }
+    .role-grid { grid-template-columns: 1fr; gap: 16px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .year-grid { grid-template-columns: repeat(2, 1fr); }
+    .section-card { padding: 24px 18px; border-radius: var(--radius-md); }
+    .hero { padding: 42px 18px 38px; margin: 16px 0 16px; border-radius: var(--radius-md); }
+    .btn { padding: 15px 22px; font-size: 15px; width: 100%; }
+    .btn-row { flex-direction: column-reverse; }
+    .btn-row.split { flex-direction: column-reverse; }
+    input, textarea { font-size: 16px; padding: 13px 15px; min-height: 50px; }
+    .tracking-card { padding: 22px 20px; width: 100%; }
+    .challenge-block { padding: 22px 18px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar"><div class="topbar-inner"><div class="wordmark">Tech<span class="accent">Keey</span></div></div></div>
+
+  <div id="main-content">
+
+    <!-- ============ HERO ============ -->
+    <div class="hero">
+      <div class="hero-eyebrow">TechKeey</div>
+      <h1 class="hero-title">Turning Real Problems Into <span class="accent">Better Ideas</span></h1>
+      <p class="hero-text">Every day, students and faculty experience challenges that could be improved with the right idea. TechKeey is creating a platform to understand these real-world challenges and the solutions people believe could make a difference.</p>
+    </div>
+
+    <!-- ============ HOW IT WORKS ============ -->
+    <div class="how-grid">
+      <div class="how-card"><div class="how-num">IDENTIFY</div><div class="how-title">Tell us</div><p class="how-desc">Tell us about a genuine challenge.</p></div>
+      <div class="how-card"><div class="how-num">SUGGEST</div><div class="how-title">Share it</div><p class="how-desc">Share the solution you believe could help.</p></div>
+      <div class="how-card"><div class="how-num">EVALUATE</div><div class="how-title">We review</div><p class="how-desc">TechKeey will review the submitted challenge and solution.</p></div>
+    </div>
+
+    <!-- ============ BEFORE YOU BEGIN ============ -->
+    <div class="info-panel">
+      <h3>Before You Begin</h3>
+      <p>Think about a genuine challenge you experience or observe in your college or day-to-day academic environment.</p>
+      <p>Describe the challenge clearly and explain the solution you believe could help.</p>
+      <p>You can share more than one challenge. Use <strong>＋ Add Another Challenge</strong> to provide additional challenge and solution ideas.</p>
+    </div>
+
+    <!-- ============ USER TYPE ============ -->
+    <div class="section-block">
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-eyebrow">Step One</div>
+          <h2 class="section-title">Who's sharing today?</h2>
+          <p class="section-sub">Choose the option that describes you to get started.</p>
+        </div>
+        <div class="role-grid">
+          <div class="role-card" data-role="Student" tabindex="0" role="button" aria-pressed="false">
+            <div class="role-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1.5 3 3 6 3s6-1.5 6-3v-5"/></svg></div>
+            <div class="role-title">I'm a college student</div>
+            <div class="role-desc">Share challenges you experience in your academic or college environment and ideas that could improve them.</div>
+          </div>
+          <div class="role-card" data-role="Faculty" tabindex="0" role="button" aria-pressed="false">
+            <div class="role-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+            <div class="role-title">I'm a faculty member</div>
+            <div class="role-desc">Share challenges you observe in academic or campus environments and ideas that could improve them.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ REST OF FORM (hidden until role chosen) ============ -->
+    <div id="rest-of-form" style="display:none;">
+
+      <!-- YOUR INFORMATION -->
+      <div class="section-block">
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-eyebrow">Step Two</div>
+            <h2 class="section-title">Tell us about yourself</h2>
+            <p class="section-sub">Tell us how we can identify and contact you regarding your submission.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label" id="label-name">Name<span class="req">*</span></label>
+            <input type="text" id="input-name" maxlength="100" placeholder="Enter your full name" autocomplete="name" />
+            <div class="error-msg" id="error-name"></div>
+          </div>
+
+          <div class="field" id="field-regno">
+            <label class="field-label">Registration Number<span class="req">*</span></label>
+            <input type="text" id="input-regno" maxlength="30" placeholder="e.g. 22CS001" autocomplete="off" />
+            <div class="error-msg" id="error-regno"></div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <label class="field-label">Email ID<span class="req">*</span></label>
+              <input type="email" id="input-email" maxlength="150" placeholder="you@example.com" autocomplete="email" />
+              <div class="error-msg" id="error-email"></div>
+            </div>
+            <div class="field">
+              <label class="field-label">Mobile Number<span class="req">*</span></label>
+              <input type="tel" id="input-mobile" maxlength="10" placeholder="9876543210" autocomplete="tel" inputmode="numeric" />
+              <div class="error-msg" id="error-mobile"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLLEGE INFORMATION -->
+      <div class="section-block">
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-eyebrow">Step Three</div>
+            <h2 class="section-title">Tell us about your college</h2>
+            <p class="section-sub">Help us understand the environment in which the challenge occurs.</p>
+          </div>
+
+          <div class="field">
+            <label class="field-label">College Name<span class="req">*</span></label>
+            <input type="text" id="input-college" maxlength="150" placeholder="Enter your college name" autocomplete="organization" />
+            <div class="error-msg" id="error-college"></div>
+          </div>
+
+          <div class="field" id="field-year">
+            <label class="field-label">Year of Study<span class="req">*</span></label>
+            <div class="year-grid" id="year-grid">
+              <div class="year-pill" data-year="1st Year">1st Year</div>
+              <div class="year-pill" data-year="2nd Year">2nd Year</div>
+              <div class="year-pill" data-year="3rd Year">3rd Year</div>
+              <div class="year-pill" data-year="4th Year">4th Year</div>
+            </div>
+            <div class="error-msg" id="error-year"></div>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Location<span class="req">*</span></label>
+            <input type="text" id="input-location" maxlength="100" placeholder="City / Town / District" />
+            <div class="error-msg" id="error-location"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHALLENGES & SOLUTIONS -->
+      <div class="section-block">
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-eyebrow">Step Four</div>
+            <h2 class="section-title">Challenges &amp; Solutions</h2>
+            <p class="section-sub">Tell us about the real challenges you experience and the ideas you believe could help solve them.</p>
+          </div>
+
+          <div id="challenges-container"></div>
+          <button type="button" class="add-challenge-btn" id="btn-add-challenge">＋ Add Another Challenge</button>
+        </div>
+      </div>
+
+      <!-- REMARKS -->
+      <div class="section-block">
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-eyebrow">Step Five</div>
+            <h2 class="section-title">Additional Remarks</h2>
+            <p class="section-sub">Optional — anything else you'd like to mention.</p>
+          </div>
+          <div class="field">
+            <label class="field-label">Remarks <span style="color:var(--ink-faint); font-weight:600;">(optional)</span></label>
+            <textarea id="input-remarks" maxlength="500" placeholder="Any additional remarks..." style="min-height:100px;"></textarea>
+            <div class="char-counter" id="counter-remarks">0 / 500</div>
+            <div class="error-msg" id="error-remarks"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="top-error-banner" id="top-error-banner"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-review">Review Submission</button>
+      </div>
+
+      <!-- REVIEW -->
+      <div class="section-block" id="review-section">
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-eyebrow">Final Step</div>
+            <h2 class="section-title">Review your submission</h2>
+            <p class="section-sub">Check your information and ideas before submitting them to TechKeey.</p>
+          </div>
+
+          <div id="review-content"></div>
+
+          <div class="top-error-banner" id="review-error-banner" style="margin-top:24px;"></div>
+
+          <div class="btn-row split" style="margin-top:28px;">
+            <button class="btn btn-secondary" id="btn-edit-submission">Edit Submission</button>
+            <button class="btn btn-primary" id="btn-submit"><span id="submit-btn-text">Submit Registration</span></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ SUCCESS ============ -->
+  <div id="success-section">
+    <div class="success-shell">
+      <div class="success-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <h2 class="success-title">Submission Successful</h2>
+      <p class="success-text">Thank you for sharing your challenge and solution with TechKeey.</p>
+
+      <div class="tracking-card">
+        <div class="tracking-label">Your TechKeey Tracking ID</div>
+        <div class="tracking-value" id="submission-id-value">—</div>
+        <button class="copy-btn" id="btn-copy-id">Copy ID</button>
+      </div>
+      <div class="success-note">Please keep this Tracking ID for future reference.</div>
+
+      <p class="after-note">Your submission has been successfully recorded. TechKeey will review the challenges and suggested solutions. If further information is required, the team may contact you using the details provided.</p>
+
+      <div class="process-row">
+        <div class="process-step">Submitted</div>
+        <div class="process-arrow">→</div>
+        <div class="process-step">Evaluated</div>
+        <div class="process-arrow">→</div>
+        <div class="process-step">Further Consideration</div>
+      </div>
+    </div>
+
+    <div class="btn-row" style="justify-content:center; margin-top:28px;">
+      <button class="btn btn-primary" id="btn-restart">Submit Another Response</button>
+    </div>
+  </div>
+
+  <div class="footer-note">Tech<span class="accent">Keey</span> &middot; Problem &amp; Solution Registration System</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var state = { userType: "", selectedYear: "", submitting: false, challengeSeq: 0 };
+
+  var el = {
+    mainContent: document.getElementById("main-content"),
+    successSection: document.getElementById("success-section"),
+    roleCards: document.querySelectorAll(".role-card"),
+    restOfForm: document.getElementById("rest-of-form"),
+    fieldRegno: document.getElementById("field-regno"),
+    fieldYear: document.getElementById("field-year"),
+    yearGrid: document.getElementById("year-grid"),
+    labelName: document.getElementById("label-name"),
+    inputName: document.getElementById("input-name"),
+    inputRegno: document.getElementById("input-regno"),
+    inputEmail: document.getElementById("input-email"),
+    inputMobile: document.getElementById("input-mobile"),
+    inputCollege: document.getElementById("input-college"),
+    inputLocation: document.getElementById("input-location"),
+    inputRemarks: document.getElementById("input-remarks"),
+    counterRemarks: document.getElementById("counter-remarks"),
+    challengesContainer: document.getElementById("challenges-container"),
+    btnAddChallenge: document.getElementById("btn-add-challenge"),
+    topErrorBanner: document.getElementById("top-error-banner"),
+    btnReview: document.getElementById("btn-review"),
+    reviewSection: document.getElementById("review-section"),
+    reviewContent: document.getElementById("review-content"),
+    reviewErrorBanner: document.getElementById("review-error-banner"),
+    btnEditSubmission: document.getElementById("btn-edit-submission"),
+    btnSubmit: document.getElementById("btn-submit"),
+    submitBtnText: document.getElementById("submit-btn-text"),
+    submissionIdValue: document.getElementById("submission-id-value"),
+    btnCopyId: document.getElementById("btn-copy-id"),
+    btnRestart: document.getElementById("btn-restart")
+  };
+
+  function trim(v) { return (v || "").replace(/^\s+|\s+$/g, ""); }
+  function isBlank(v) { return trim(v).length === 0; }
+  function escapeHtml(str) { var d = document.createElement("div"); d.textContent = str; return d.innerHTML; }
+
+  var NAME_REGEX = /^[A-Za-z][A-Za-z.\s]*$/;
+  var EMAIL_REGEX = /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
+  var MOBILE_REGEX = /^[6-9][0-9]{9}$/;
+
+  function isValidName(v) { var t = trim(v); if (!t || t.length > 100) return false; if (t.indexOf("..") !== -1) return false; return NAME_REGEX.test(t); }
+  function isValidEmail(v) { var t = trim(v); if (!t || t.length > 150) return false; if (t.indexOf(" ") !== -1) return false; if ((t.match(/@/g) || []).length !== 1) return false; if (t.charAt(0) === "." || t.charAt(t.length - 1) === ".") return false; if (t.indexOf("..") !== -1) return false; return EMAIL_REGEX.test(t); }
+  function isValidMobile(v) { return MOBILE_REGEX.test(trim(v)); }
+
+  function setError(key, message, scopeEl) {
+    var root = scopeEl || document;
+    var errEl = root.querySelector("#error-" + key) || root.querySelector('[data-error="' + key + '"]');
+    var inputEl = root.querySelector("#input-" + key) || root.querySelector('[data-field="' + key + '"]');
+    if (errEl) { errEl.textContent = message; errEl.classList.toggle("show", !!message); }
+    if (inputEl) inputEl.classList.toggle("invalid", !!message);
+  }
+
+  // ---------------- Role selection ----------------
+  el.roleCards.forEach(function (card) {
+    function selectCard() {
+      el.roleCards.forEach(function (c) { c.classList.remove("selected"); c.setAttribute("aria-pressed", "false"); });
+      card.classList.add("selected");
+      card.setAttribute("aria-pressed", "true");
+      state.userType = card.getAttribute("data-role");
+      applyRoleVisibility();
+      el.restOfForm.style.display = "";
+      setTimeout(function () {
+        el.restOfForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+    }
+    card.addEventListener("click", selectCard);
+    card.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectCard(); } });
+  });
+
+  function applyRoleVisibility() {
+    var isStudent = state.userType === "Student";
+    el.fieldRegno.style.display = isStudent ? "" : "none";
+    el.fieldYear.style.display = isStudent ? "" : "none";
+    el.labelName.innerHTML = (isStudent ? "Student Name" : "Faculty Name") + '<span class="req">*</span>';
+    el.inputName.placeholder = isStudent ? "Enter your student name" : "Enter your faculty name";
+  }
+
+  // ---------------- Year selector ----------------
+  el.yearGrid.querySelectorAll(".year-pill").forEach(function (pill) {
+    pill.addEventListener("click", function () {
+      el.yearGrid.querySelectorAll(".year-pill").forEach(function (p) { p.classList.remove("selected"); });
+      pill.classList.add("selected");
+      state.selectedYear = pill.getAttribute("data-year");
+      setError("year", "");
+    });
+  });
+
+  // ---------------- Remarks counter ----------------
+  function bindCounter(inputEl, counterEl, max) {
+    function update() {
+      var len = inputEl.value.length;
+      counterEl.textContent = len + " / " + max;
+      counterEl.classList.toggle("warn", len >= max * 0.85 && len < max);
+      counterEl.classList.toggle("limit", len >= max);
+    }
+    inputEl.addEventListener("input", function () {
+      if (inputEl.value.length > max) inputEl.value = inputEl.value.slice(0, max);
+      update();
+    });
+    update();
+  }
+  bindCounter(el.inputRemarks, el.counterRemarks, 500);
+  el.inputMobile.addEventListener("input", function () { el.inputMobile.value = el.inputMobile.value.replace(/[^0-9]/g, "").slice(0, 10); });
+
+  // ---------------- Dynamic Challenge/Solution blocks ----------------
+  function createChallengeBlock(removable) {
+    state.challengeSeq++;
+    var uid = "c" + state.challengeSeq;
+    var block = document.createElement("div");
+    block.className = "challenge-block";
+    block.setAttribute("data-uid", uid);
+    block.setAttribute("data-removable", removable ? "true" : "false");
+    block.innerHTML =
+      '<div class="challenge-block-head">' +
+        '<div class="challenge-label" data-role="label">Challenge 0' + '1</div>' +
+        (removable ? '<button type="button" class="remove-challenge-btn">Remove Challenge</button>' : '') +
+      '</div>' +
+      '<div class="field">' +
+        '<label class="field-label">What challenge do you face?<span class="req">*</span></label>' +
+        '<textarea class="challenge-textarea challenge-input" maxlength="50" placeholder="Describe a genuine challenge in one short line..."></textarea>' +
+        '<div class="char-counter challenge-counter">0 / 50</div>' +
+        '<div class="error-msg challenge-error"></div>' +
+      '</div>' +
+      '<div class="field">' +
+        '<label class="field-label">How do you think it could be solved?<span class="req">*</span></label>' +
+        '<textarea class="solution-textarea solution-input" maxlength="1000" placeholder="Share your idea, approach, or practical solution..."></textarea>' +
+        '<div class="char-counter solution-counter">0 / 1000</div>' +
+        '<div class="error-msg solution-error"></div>' +
+      '</div>';
+
+    var challengeInput = block.querySelector(".challenge-input");
+    var challengeCounter = block.querySelector(".challenge-counter");
+    var solutionInput = block.querySelector(".solution-input");
+    var solutionCounter = block.querySelector(".solution-counter");
+    bindCounter(challengeInput, challengeCounter, 50);
+    bindCounter(solutionInput, solutionCounter, 1000);
+
+    if (removable) {
+      block.querySelector(".remove-challenge-btn").addEventListener("click", function () {
+        block.remove();
+        renumberChallenges();
+      });
+    }
+
+    return block;
+  }
+
+  function renumberChallenges() {
+    var blocks = el.challengesContainer.querySelectorAll(".challenge-block");
+    blocks.forEach(function (block, idx) {
+      var label = block.querySelector('[data-role="label"]');
+      var n = idx + 1;
+      label.textContent = "Challenge " + (n < 10 ? "0" + n : n);
+    });
+  }
+
+  el.btnAddChallenge.addEventListener("click", function () {
+    var block = createChallengeBlock(true);
+    el.challengesContainer.appendChild(block);
+    renumberChallenges();
+    block.scrollIntoView({ behavior: "smooth", block: "center" });
+    block.querySelector(".challenge-input").focus();
+  });
+
+  // seed first (non-removable) challenge block
+  el.challengesContainer.appendChild(createChallengeBlock(false));
+  renumberChallenges();
+
+  // ---------------- Validation ----------------
+  function validateAll() {
+    var valid = true;
+    var isStudent = state.userType === "Student";
+
+    if (!isValidName(el.inputName.value)) {
+      setError("name", isBlank(el.inputName.value) ? "Please enter your name." : "Please enter a valid name (letters only, max 100 characters).");
+      valid = false;
+    } else setError("name", "");
+
+    if (isStudent) {
+      var reg = trim(el.inputRegno.value);
+      if (!reg) { setError("regno", "Please enter your registration number."); valid = false; }
+      else if (reg.length > 30) { setError("regno", "Registration number cannot exceed 30 characters."); valid = false; }
+      else setError("regno", "");
+    }
+
+    if (!isValidEmail(el.inputEmail.value)) { setError("email", "Please enter a valid email address."); valid = false; } else setError("email", "");
+    if (!isValidMobile(el.inputMobile.value)) { setError("mobile", "Please enter a valid 10-digit mobile number."); valid = false; } else setError("mobile", "");
+
+    var college = trim(el.inputCollege.value);
+    if (!college) { setError("college", "Please enter your college name."); valid = false; }
+    else if (college.length > 150) { setError("college", "College name cannot exceed 150 characters."); valid = false; }
+    else setError("college", "");
+
+    if (isStudent && !state.selectedYear) { setError("year", "Please select your year of study."); valid = false; } else setError("year", "");
+
+    var loc = trim(el.inputLocation.value);
+    if (!loc) { setError("location", "Please enter your location."); valid = false; }
+    else if (loc.length > 100) { setError("location", "Location cannot exceed 100 characters."); valid = false; }
+    else setError("location", "");
+
+    var blocks = el.challengesContainer.querySelectorAll(".challenge-block");
+    blocks.forEach(function (block) {
+      var cInput = block.querySelector(".challenge-input");
+      var sInput = block.querySelector(".solution-input");
+      var cErr = block.querySelector(".challenge-error");
+      var sErr = block.querySelector(".solution-error");
+      var cVal = trim(cInput.value);
+      var sVal = trim(sInput.value);
+
+      if (!cVal) { cErr.textContent = "Please describe the challenge."; cErr.classList.add("show"); cInput.classList.add("invalid"); valid = false; }
+      else if (cVal.length > 50) { cErr.textContent = "Challenge cannot exceed 50 characters."; cErr.classList.add("show"); cInput.classList.add("invalid"); valid = false; }
+      else { cErr.textContent = ""; cErr.classList.remove("show"); cInput.classList.remove("invalid"); }
+
+      if (!sVal) { sErr.textContent = "Please suggest a solution."; sErr.classList.add("show"); sInput.classList.add("invalid"); valid = false; }
+      else if (sVal.length > 1000) { sErr.textContent = "Suggested Solution cannot exceed 1000 characters."; sErr.classList.add("show"); sInput.classList.add("invalid"); valid = false; }
+      else { sErr.textContent = ""; sErr.classList.remove("show"); sInput.classList.remove("invalid"); }
+    });
+
+    if (trim(el.inputRemarks.value).length > 500) { setError("remarks", "Remarks cannot exceed 500 characters."); valid = false; } else setError("remarks", "");
+
+    return valid;
+  }
+
+  // ---------------- Collect data ----------------
+  function collectFormData() {
+    var isStudent = state.userType === "Student";
+    var challenges = [];
+    el.challengesContainer.querySelectorAll(".challenge-block").forEach(function (block) {
+      challenges.push({
+        challenge: trim(block.querySelector(".challenge-input").value),
+        solution: trim(block.querySelector(".solution-input").value)
+      });
+    });
+
+    return {
+      userType: state.userType,
+      name: trim(el.inputName.value),
+      registrationNumber: isStudent ? trim(el.inputRegno.value) : "",
+      email: trim(el.inputEmail.value),
+      mobile: trim(el.inputMobile.value),
+      college: trim(el.inputCollege.value),
+      yearOfStudy: isStudent ? state.selectedYear : "",
+      location: trim(el.inputLocation.value),
+      challenges: challenges,
+      remarks: trim(el.inputRemarks.value)
+    };
+  }
+
+  // ---------------- Review ----------------
+  function reviewRow(key, val) {
+    return '<div class="review-row"><div class="review-key">' + key + '</div><div class="review-val">' + escapeHtml(val || "—") + "</div></div>";
+  }
+
+  function renderReview() {
+    var d = collectFormData();
+    var isStudent = d.userType === "Student";
+    var html = "";
+
+    html += '<div class="review-card"><div class="review-heading">Your Information</div>';
+    html += reviewRow("Name", d.name);
+    if (isStudent) html += reviewRow("Registration Number", d.registrationNumber);
+    html += reviewRow("Email", d.email);
+    html += reviewRow("Mobile", d.mobile);
+    html += "</div>";
+
+    html += '<div class="review-card"><div class="review-heading">College Information</div>';
+    html += reviewRow("College", d.college);
+    if (isStudent) html += reviewRow("Year", d.yearOfStudy);
+    html += reviewRow("Location", d.location);
+    html += "</div>";
+
+    html += '<div class="review-card"><div class="review-heading">Challenge &amp; Solutions</div>';
+    d.challenges.forEach(function (pair, idx) {
+      var n = idx + 1;
+      var label = "Challenge " + (n < 10 ? "0" + n : n);
+      html += '<div class="review-pair">';
+      html += '<div class="review-pair-label">' + label + '</div>';
+      html += '<div class="review-block-val">' + escapeHtml(pair.challenge) + '</div>';
+      html += '<div class="review-solution-label">Suggested Solution</div>';
+      html += '<div class="review-block-val" style="margin-bottom:0;">' + escapeHtml(pair.solution) + '</div>';
+      html += '</div>';
+    });
+    html += "</div>";
+
+    if (d.remarks) {
+      html += '<div class="review-card"><div class="review-heading">Additional Remarks</div><div class="review-block-val" style="margin-bottom:0;">' + escapeHtml(d.remarks) + '</div></div>';
+    }
+
+    el.reviewContent.innerHTML = html;
+  }
+
+  el.btnReview.addEventListener("click", function () {
+    if (!validateAll()) {
+      el.topErrorBanner.textContent = "Please fix the highlighted fields before reviewing your submission.";
+      el.topErrorBanner.classList.add("show");
+      var firstInvalid = document.querySelector(".invalid");
+      if (firstInvalid) firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    el.topErrorBanner.classList.remove("show");
+    renderReview();
+    el.reviewSection.style.display = "";
+    setTimeout(function () { el.reviewSection.scrollIntoView({ behavior: "smooth", block: "start" }); }, 80);
+  });
+
+  el.btnEditSubmission.addEventListener("click", function () {
+    el.reviewSection.style.display = "none";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // ---------------- Submission ----------------
+  el.btnSubmit.addEventListener("click", function () {
+    if (state.submitting) return;
+    if (!validateAll()) {
+      el.reviewErrorBanner.textContent = "Please fix the highlighted fields before submitting.";
+      el.reviewErrorBanner.classList.add("show");
+      return;
+    }
+    el.reviewErrorBanner.classList.remove("show");
+
+    var data = collectFormData();
+    state.submitting = true;
+    el.btnSubmit.disabled = true;
+    el.btnEditSubmission.disabled = true;
+    el.submitBtnText.innerHTML = '<span class="spinner"></span> Submitting...';
+
+    function onSuccess(response) {
+      state.submitting = false;
+      el.btnSubmit.disabled = false;
+      el.btnEditSubmission.disabled = false;
+      el.submitBtnText.textContent = "Submit Registration";
+
+      if (response && response.status === "success") {
+        el.submissionIdValue.textContent = response.submissionId;
+        el.btnCopyId.textContent = "Copy ID";
+        el.btnCopyId.classList.remove("copied");
+        el.mainContent.style.display = "none";
+        el.successSection.style.display = "block";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        var msg = (response && response.message) ? response.message : "Something went wrong. Please try again.";
+        el.reviewErrorBanner.textContent = msg;
+        el.reviewErrorBanner.classList.add("show");
+      }
+    }
+
+    function onFailure(error) {
+      state.submitting = false;
+      el.btnSubmit.disabled = false;
+      el.btnEditSubmission.disabled = false;
+      el.submitBtnText.textContent = "Submit Registration";
+      el.reviewErrorBanner.textContent = "Network error: could not reach the server. Please try again.";
+      el.reviewErrorBanner.classList.add("show");
+      console.error(error);
+    }
+
+    if (window.google && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure).submitRegistration(data);
+    } else {
+      setTimeout(function () {
+        var d = new Date();
+        var yyyy = d.getFullYear();
+        var mm = ("0" + (d.getMonth() + 1)).slice(-2);
+        var dd = ("0" + d.getDate()).slice(-2);
+        onSuccess({ status: "success", submissionId: "TK-" + yyyy + mm + dd + "-0001" });
+      }, 900);
+    }
+  });
+
+  el.btnCopyId.addEventListener("click", function () {
+    var val = el.submissionIdValue.textContent;
+    if (!val || val === "—") return;
+    var finish = function () {
+      el.btnCopyId.textContent = "Copied";
+      el.btnCopyId.classList.add("copied");
+      setTimeout(function () { el.btnCopyId.textContent = "Copy ID"; el.btnCopyId.classList.remove("copied"); }, 1800);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(val).then(finish).catch(finish);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = val;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+      finish();
+    }
+  });
+
+  // ---------------- Restart ----------------
+  el.btnRestart.addEventListener("click", function () {
+    resetForm();
+    el.successSection.style.display = "none";
+    el.mainContent.style.display = "";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  function resetForm() {
+    state.userType = "";
+    state.selectedYear = "";
+    state.challengeSeq = 0;
+
+    el.roleCards.forEach(function (c) { c.classList.remove("selected"); c.setAttribute("aria-pressed", "false"); });
+    el.restOfForm.style.display = "none";
+    el.reviewSection.style.display = "none";
+
+    [el.inputName, el.inputRegno, el.inputEmail, el.inputMobile, el.inputCollege, el.inputLocation, el.inputRemarks].forEach(function (i) { i.value = ""; });
+    el.yearGrid.querySelectorAll(".year-pill").forEach(function (p) { p.classList.remove("selected"); });
+
+    el.counterRemarks.textContent = "0 / 500";
+    el.counterRemarks.classList.remove("warn", "limit");
+
+    document.querySelectorAll(".error-msg").forEach(function (e) { e.textContent = ""; e.classList.remove("show"); });
+    document.querySelectorAll(".invalid").forEach(function (e) { e.classList.remove("invalid"); });
+    el.topErrorBanner.classList.remove("show");
+    el.reviewErrorBanner.classList.remove("show");
+
+    el.challengesContainer.innerHTML = "";
+    el.challengesContainer.appendChild(createChallengeBlock(false));
+    renumberChallenges();
+  }
+})();
+</script>
+</body>
+</html>
