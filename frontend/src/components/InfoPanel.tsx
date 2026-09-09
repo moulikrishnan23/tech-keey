@@ -10,9 +10,9 @@ export const InfoPanel: React.FC = () => {
       <p>
         💡 <strong>Propose Your Solution:</strong> Explain your practical approach, methodology, or creative concept.
       </p>
-      <p>
+      {/* <p>
         ➕ <strong>Multiple Submissions:</strong> You can share more than one challenge. Use <strong>＋ Add Another Challenge</strong> to provide additional challenge and solution ideas.
-      </p>
+      </p> */}
     </div>
   );
 };

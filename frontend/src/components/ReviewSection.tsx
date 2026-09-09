@@ -38,10 +38,36 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({
               <div className="review-val">{formData.name || '—'}</div>
             </div>
             {isStudent && (
-              <div className="review-row">
-                <div className="review-key">Registration Number</div>
-                <div className="review-val">{formData.registrationNumber || '—'}</div>
-              </div>
+              <>
+                <div className="review-row">
+                  <div className="review-key">Registration Number</div>
+                  <div className="review-val">{formData.registrationNumber || '—'}</div>
+                </div>
+                <div className="review-row">
+                  <div className="review-key">Education Level</div>
+                  <div className="review-val">
+                    {formData.educationLevel === 'Others'
+                      ? `Others (${formData.educationLevelOther || 'Specified'})`
+                      : formData.educationLevel || '—'}
+                  </div>
+                </div>
+                {formData.educationLevel !== 'Others' && (
+                  <>
+                    <div className="review-row">
+                      <div className="review-key">Stream / Discipline</div>
+                      <div className="review-val">{formData.stream || '—'}</div>
+                    </div>
+                    <div className="review-row">
+                      <div className="review-key">Degree / Course</div>
+                      <div className="review-val">
+                        {formData.course === 'Other / Not Listed' || formData.stream === 'Other / Not Listed'
+                          ? formData.courseOther || 'Other / Not Listed'
+                          : formData.course || '—'}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
             )}
             <div className="review-row">
               <div className="review-key">Email</div>
@@ -75,14 +101,12 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({
           {/* Challenges & Solutions Card */}
           <div className="review-card">
             <div className="review-heading">Challenge &amp; Solutions</div>
-            {formData.challenges.map((pair, idx) => {
-              const n = idx + 1;
-              const label = `Challenge ${n < 10 ? '0' + n : n}`;
+            {formData.challenges.map((pair) => {
               return (
                 <div key={pair.id} className="review-pair">
-                  <div className="review-pair-label">{label}</div>
+                  <div className="review-pair-label">Challenge:</div>
                   <div className="review-block-val">{pair.challenge || '—'}</div>
-                  <div className="review-solution-label">Suggested Solution</div>
+                  <div className="review-solution-label">Suggested Solution:</div>
                   <div className="review-block-val" style={{ marginBottom: 0 }}>
                     {pair.solution || '—'}
                   </div>

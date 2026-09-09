@@ -1,0 +1,8 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Logs & Temp
+npm-debug.log*
+.DS_Store
+Thumbs.db

@@ -12,6 +12,7 @@ import { RemarksStep } from './components/RemarksStep';
 import { ReviewSection } from './components/ReviewSection';
 import { SuccessSection } from './components/SuccessSection';
 import { ChallengeItem, RegistrationFormData, ValidationErrors, YearOfStudy } from './types';
+import { EducationLevelOption } from './data/academicCourses';
 import { validateForm } from './utils/validation';
 import { submitRegistrationApi } from './services/api';
 
@@ -19,6 +20,11 @@ const initialFormData: RegistrationFormData = {
   userType: '',
   name: '',
   registrationNumber: '',
+  educationLevel: '',
+  educationLevelOther: '',
+  stream: '',
+  course: '',
+  courseOther: '',
   email: '',
   mobile: '',
   college: '',
@@ -47,6 +53,11 @@ export const App: React.FC = () => {
       ...prev,
       userType: role,
       registrationNumber: role === 'Faculty' ? '' : prev.registrationNumber,
+      educationLevel: role === 'Faculty' ? '' : prev.educationLevel,
+      educationLevelOther: role === 'Faculty' ? '' : prev.educationLevelOther,
+      stream: role === 'Faculty' ? '' : prev.stream,
+      course: role === 'Faculty' ? '' : prev.course,
+      courseOther: role === 'Faculty' ? '' : prev.courseOther,
       yearOfStudy: role === 'Faculty' ? '' : prev.yearOfStudy,
     }));
 
@@ -54,6 +65,11 @@ export const App: React.FC = () => {
       const next = { ...prev };
       delete next.name;
       delete next.registrationNumber;
+      delete next.educationLevel;
+      delete next.educationLevelOther;
+      delete next.stream;
+      delete next.course;
+      delete next.courseOther;
       delete next.yearOfStudy;
       return next;
     });
@@ -74,6 +90,46 @@ export const App: React.FC = () => {
   const handleRegNoChange = (val: string) => {
     setFormData((prev) => ({ ...prev, registrationNumber: val }));
     if (errors.registrationNumber) setErrors((prev) => ({ ...prev, registrationNumber: undefined }));
+  };
+
+  const handleEducationLevelChange = (level: EducationLevelOption) => {
+    setFormData((prev) => ({
+      ...prev,
+      educationLevel: level,
+      educationLevelOther: level === 'Others' ? prev.educationLevelOther : '',
+      stream: level === 'Others' ? '' : prev.stream,
+      course: level === 'Others' ? '' : prev.course,
+      courseOther: level === 'Others' ? '' : prev.courseOther,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      educationLevel: undefined,
+      educationLevelOther: undefined,
+      stream: undefined,
+      course: undefined,
+      courseOther: undefined,
+    }));
+  };
+
+  const handleEducationLevelOtherChange = (val: string) => {
+    setFormData((prev) => ({ ...prev, educationLevelOther: val }));
+    if (errors.educationLevelOther) setErrors((prev) => ({ ...prev, educationLevelOther: undefined }));
+  };
+
+  const handleStreamChange = (val: string) => {
+    setFormData((prev) => ({ ...prev, stream: val }));
+    if (errors.stream) setErrors((prev) => ({ ...prev, stream: undefined }));
+  };
+
+  const handleCourseChange = (val: string) => {
+    setFormData((prev) => ({ ...prev, course: val }));
+    if (errors.course) setErrors((prev) => ({ ...prev, course: undefined }));
+  };
+
+  const handleCourseOtherChange = (val: string) => {
+    setFormData((prev) => ({ ...prev, courseOther: val }));
+    if (errors.courseOther) setErrors((prev) => ({ ...prev, courseOther: undefined }));
   };
 
   const handleEmailChange = (val: string) => {
@@ -106,7 +162,7 @@ export const App: React.FC = () => {
     if (errors.remarks) setErrors((prev) => ({ ...prev, remarks: undefined }));
   };
 
-  // Dynamic Challenges
+  // Dynamic Challenges (preserved for code integrity)
   const handleAddChallenge = () => {
     const nextSeq = challengeSeq + 1;
     setChallengeSeq(nextSeq);
@@ -255,11 +311,21 @@ export const App: React.FC = () => {
                 userType={formData.userType}
                 name={formData.name}
                 registrationNumber={formData.registrationNumber}
+                educationLevel={formData.educationLevel}
+                educationLevelOther={formData.educationLevelOther}
+                stream={formData.stream}
+                course={formData.course}
+                courseOther={formData.courseOther}
                 email={formData.email}
                 mobile={formData.mobile}
                 errors={errors}
                 onChangeName={handleNameChange}
                 onChangeRegNo={handleRegNoChange}
+                onChangeEducationLevel={handleEducationLevelChange}
+                onChangeEducationLevelOther={handleEducationLevelOtherChange}
+                onChangeStream={handleStreamChange}
+                onChangeCourse={handleCourseChange}
+                onChangeCourseOther={handleCourseOtherChange}
                 onChangeEmail={handleEmailChange}
                 onChangeMobile={handleMobileChange}
               />

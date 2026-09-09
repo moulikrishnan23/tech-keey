@@ -13,8 +13,8 @@ interface ChallengesStepProps {
 export const ChallengesStep: React.FC<ChallengesStepProps> = ({
   challenges,
   errors,
-  onAddChallenge,
-  onRemoveChallenge,
+  onAddChallenge: _onAddChallenge,
+  onRemoveChallenge: _onRemoveChallenge,
   onChangeChallengeField,
 }) => {
   return (
@@ -29,11 +29,10 @@ export const ChallengesStep: React.FC<ChallengesStepProps> = ({
         </div>
 
         <div id="challenges-container">
-          {challenges.map((item, index) => {
-            const num = index + 1;
-            const label = `Challenge ${num < 10 ? '0' + num : num}`;
+          {challenges.map((item) => {
+            const label = 'Challenge:';
             const itemErrors = errors.challenges?.[item.id] || {};
-            const isRemovable = index > 0;
+            // const isRemovable = index > 0;
 
             const cLen = item.challenge.length;
             const sLen = item.solution.length;
@@ -44,6 +43,7 @@ export const ChallengesStep: React.FC<ChallengesStepProps> = ({
                   <div className="challenge-label" data-role="label">
                     {label}
                   </div>
+                  {/* 
                   {isRemovable && (
                     <button
                       type="button"
@@ -52,7 +52,8 @@ export const ChallengesStep: React.FC<ChallengesStepProps> = ({
                     >
                       Remove Challenge
                     </button>
-                  )}
+                  )} 
+                  */}
                 </div>
 
                 {/* Challenge field */}
@@ -127,6 +128,7 @@ export const ChallengesStep: React.FC<ChallengesStepProps> = ({
           })}
         </div>
 
+        {/* 
         <button
           type="button"
           className="add-challenge-btn"
@@ -134,7 +136,8 @@ export const ChallengesStep: React.FC<ChallengesStepProps> = ({
           onClick={onAddChallenge}
         >
           ＋ Add Another Challenge
-        </button>
+        </button> 
+        */}
       </div>
     </div>
   );

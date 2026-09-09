@@ -52,7 +52,7 @@ export function validateForm(data: RegistrationFormData): { isValid: boolean; er
     isValid = false;
   }
 
-  // Registration Number (Student only)
+  // Registration Number & Academic Details (Student only)
   if (isStudent) {
     const trimmedRegNo = data.registrationNumber.trim();
     if (!trimmedRegNo) {
@@ -61,6 +61,37 @@ export function validateForm(data: RegistrationFormData): { isValid: boolean; er
     } else if (trimmedRegNo.length > LIMITS.registrationNumber) {
       errors.registrationNumber = `Registration number cannot exceed ${LIMITS.registrationNumber} characters.`;
       isValid = false;
+    }
+
+    // Education Level
+    if (!data.educationLevel) {
+      errors.educationLevel = 'Please select your education level.';
+      isValid = false;
+    } else if (data.educationLevel === 'Others') {
+      const trimmedEduOther = (data.educationLevelOther || '').trim();
+      if (!trimmedEduOther) {
+        errors.educationLevelOther = 'Please specify your education level / qualification.';
+        isValid = false;
+      }
+    } else {
+      // Stream / Discipline
+      if (!data.stream) {
+        errors.stream = 'Please select your stream / discipline.';
+        isValid = false;
+      }
+
+      // Course / Degree
+      const trimmedCourse = (data.course || '').trim();
+      if (!trimmedCourse) {
+        errors.course = 'Please select your degree / course.';
+        isValid = false;
+      } else if (trimmedCourse === 'Other / Not Listed' || data.stream === 'Other / Not Listed') {
+        const trimmedCourseOther = (data.courseOther || '').trim();
+        if (!trimmedCourseOther) {
+          errors.courseOther = 'Please specify your degree / course name.';
+          isValid = false;
+        }
+      }
     }
   }
 

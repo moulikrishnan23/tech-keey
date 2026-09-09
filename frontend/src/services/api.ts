@@ -19,10 +19,33 @@ declare global {
 
 export function formatPayload(data: RegistrationFormData): SubmissionPayload {
   const isStudent = data.userType === 'Student';
+
+  let educationLevel = '';
+  let stream = '';
+  let course = '';
+
+  if (isStudent) {
+    educationLevel =
+      data.educationLevel === 'Others'
+        ? `Others - ${data.educationLevelOther.trim()}`
+        : data.educationLevel;
+
+    stream = data.stream || '';
+
+    if (data.course === 'Other / Not Listed' || data.stream === 'Other / Not Listed') {
+      course = data.courseOther ? `Other - ${data.courseOther.trim()}` : data.course || '';
+    } else {
+      course = data.course || '';
+    }
+  }
+
   return {
     userType: data.userType,
     name: data.name.trim(),
     registrationNumber: isStudent ? data.registrationNumber.trim() : '',
+    educationLevel: educationLevel,
+    stream: stream,
+    course: course,
     email: data.email.trim(),
     mobile: data.mobile.trim(),
     college: data.college.trim(),

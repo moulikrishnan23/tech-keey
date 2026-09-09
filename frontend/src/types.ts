@@ -1,3 +1,5 @@
+import { EducationLevelOption } from './data/academicCourses';
+
 export type UserType = 'Student' | 'Faculty' | '';
 
 export type YearOfStudy = '1st Year' | '2nd Year' | '3rd Year' | '4th Year' | '';
@@ -12,6 +14,11 @@ export interface RegistrationFormData {
   userType: UserType;
   name: string;
   registrationNumber: string;
+  educationLevel: EducationLevelOption | '';
+  educationLevelOther: string;
+  stream: string;
+  course: string;
+  courseOther: string;
   email: string;
   mobile: string;
   college: string;
@@ -25,6 +32,9 @@ export interface SubmissionPayload {
   userType: string;
   name: string;
   registrationNumber: string;
+  educationLevel: string;
+  stream: string;
+  course: string;
   email: string;
   mobile: string;
   college: string;
@@ -43,6 +53,11 @@ export interface BackendResponse {
 export interface ValidationErrors {
   name?: string;
   registrationNumber?: string;
+  educationLevel?: string;
+  educationLevelOther?: string;
+  stream?: string;
+  course?: string;
+  courseOther?: string;
   email?: string;
   mobile?: string;
   college?: string;

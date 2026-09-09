@@ -2,7 +2,7 @@
  * ============================================================================
  *  TechKeey — Problem & Solution Registration System
  *  Backend: Code.gs (Google Apps Script)
- *  Version: 1.0 (single-page, multiple challenge/solution pairs)
+ *  Version: 1.1 (single challenge/solution, structured student academics)
  * ============================================================================
  *
  *  SETUP:
@@ -15,10 +15,14 @@ const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID';
 const SHEET_NAME = 'TechKeey_Submissions';
 
 const HEADERS = [
+  'SNo',
   'Timestamp',
   'Submission ID',
   'User Type',
   'Name',
+  'Education Level',
+  'Stream / Discipline',
+  'Degree / Course',
   'Registration Number',
   'Email ID',
   'Mobile Number',
@@ -32,6 +36,9 @@ const HEADERS = [
 const LIMITS = {
   name: 100,
   registrationNumber: 30,
+  educationLevel: 100,
+  stream: 100,
+  course: 150,
   email: 150,
   mobile: 10,
   college: 150,
@@ -41,7 +48,7 @@ const LIMITS = {
   remarks: 500
 };
 
-const MAX_CHALLENGES = 10; // sanity ceiling — UI supports 5+ comfortably
+const MAX_CHALLENGES = 10; // sanity ceiling
 
 const VALID_USER_TYPES = ['Student', 'Faculty'];
 const VALID_YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
@@ -136,20 +143,24 @@ function getOrCreateSheet_() {
 }
 
 function ensureHeaders_(sheet) {
-  const existing = sheet.getRange(1, 1, 1, HEADERS.length).getValues()[0];
+  const numHeaders = HEADERS.length;
+  const existing = sheet.getRange(1, 1, 1, numHeaders).getValues()[0];
   const headersMatch = HEADERS.every(function (h, i) { return existing[i] === h; });
 
   if (!headersMatch) {
-    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
-    sheet.getRange(1, 1, 1, HEADERS.length)
+    sheet.getRange(1, 1, 1, numHeaders).setValues([HEADERS]);
+    sheet.getRange(1, 1, 1, numHeaders)
       .setFontWeight('bold')
       .setBackground('#14171a')
       .setFontColor('#7fd9b8');
     sheet.setFrozenRows(1);
-    for (let c = 1; c <= HEADERS.length; c++) {
+    for (let c = 1; c <= numHeaders; c++) {
       sheet.autoResizeColumn(c);
     }
   }
+
+  // Format Column A (SNo) as plain number to prevent old date formatting
+  sheet.getRange('A:A').setNumberFormat('0');
 }
 
 /* ---------------------------------------------------------------------- */
@@ -185,12 +196,17 @@ function submitRegistration(payload) {
       submissionId = generateSubmissionId_();
       const timestamp = new Date();
       const challengesText = formatChallenges_(clean.challenges);
+      const sNo = Math.max(1, sheet.getLastRow());
 
       sheet.appendRow([
+        sNo,
         timestamp,
         submissionId,
         clean.userType,
         clean.name,
+        clean.educationLevel,
+        clean.stream,
+        clean.course,
         clean.registrationNumber,
         clean.email,
         clean.mobile,
@@ -200,6 +216,11 @@ function submitRegistration(payload) {
         challengesText,
         clean.remarks
       ]);
+
+      const newRow = sheet.getLastRow();
+      // Ensure SNo is formatted as a plain number (not Date/Time) and Timestamp as standard Date/Time
+      sheet.getRange(newRow, 1).setNumberFormat('0');
+      sheet.getRange(newRow, 2).setNumberFormat('yyyy-mm-dd hh:mm:ss');
     } finally {
       lock.releaseLock();
     }
@@ -253,10 +274,9 @@ function generateSubmissionId_() {
 /* ---------------------------------------------------------------------- */
 
 function formatChallenges_(challenges) {
-  return challenges.map(function (pair, idx) {
-    const n = idx + 1;
-    return 'Challenge ' + n + ': ' + pair.challenge + '\n' +
-           'Suggested Solution ' + n + ': ' + pair.solution;
+  return challenges.map(function (pair) {
+    return 'Challenge:\n' + pair.challenge + '\n\n' +
+           'Suggested Solution:\n' + pair.solution;
   }).join('\n\n');
 }
 
@@ -281,6 +301,9 @@ function validatePayload_(payload) {
   }
 
   let rawRegNo = String(payload.registrationNumber || '').trim();
+  let rawEducationLevel = String(payload.educationLevel || '').trim();
+  let rawStream = String(payload.stream || '').trim();
+  let rawCourse = String(payload.course || '').trim();
   let rawYear = String(payload.yearOfStudy || '').trim();
 
   if (isStudent) {
@@ -296,6 +319,9 @@ function validatePayload_(payload) {
   } else {
     // Faculty must NOT submit these — force blank regardless of client input.
     rawRegNo = '';
+    rawEducationLevel = '';
+    rawStream = '';
+    rawCourse = '';
     rawYear = '';
   }
 
@@ -355,6 +381,9 @@ function validatePayload_(payload) {
       userType: sanitizeForSheet_(rawUserType),
       name: sanitizeForSheet_(rawName),
       registrationNumber: sanitizeForSheet_(rawRegNo),
+      educationLevel: sanitizeForSheet_(rawEducationLevel),
+      stream: sanitizeForSheet_(rawStream),
+      course: sanitizeForSheet_(rawCourse),
       email: sanitizeForSheet_(rawEmail),
       mobile: sanitizeForSheet_(rawMobile),
       college: sanitizeForSheet_(rawCollege),
