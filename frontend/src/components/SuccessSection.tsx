@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { HACKATHON_CONFIG } from '../data/hackathonConfig';
 
 interface SuccessSectionProps {
   submissionId: string;
@@ -68,6 +69,31 @@ export const SuccessSection: React.FC<SuccessSectionProps> = ({ submissionId, on
         </div>
         <div className="success-note">Please keep this Tracking ID for future reference.</div>
 
+        {/* Prevent Re-submission Note */}
+        <div className="resubmission-block-notice">
+          <span className="notice-icon">ℹ️</span>
+          <span>If you have already submitted your response, you cannot submit another response.</span>
+        </div>
+
+        {/* Post-Submission Instagram Announcement Section */}
+        <div className="submission-notice-card success-notice">
+          <div className="notice-icon">📢</div>
+          <div className="notice-content">
+            <p className="notice-text">
+              Notifications / announcements will be posted on our Instagram page. Kindly follow our{' '}
+              <a
+                href={HACKATHON_CONFIG.social.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="notice-link"
+              >
+                Instagram page
+              </a>{' '}
+              for updates.
+            </p>
+          </div>
+        </div>
+
         <p className="after-note">
           Your submission has been successfully recorded. TechKeey will review the challenges and suggested solutions. If further information is required, the team may contact you using the details provided.
         </p>
@@ -83,11 +109,28 @@ export const SuccessSection: React.FC<SuccessSectionProps> = ({ submissionId, on
         </div>
       </div>
 
+      {/* 
+      // Submit Another Response button preserved in code
       <div className="btn-row" style={{ justifyContent: 'center', marginTop: '28px' }}>
         <button type="button" className="btn btn-primary" id="btn-restart" onClick={onRestart}>
           Submit Another Response
+        </button>
+      </div> 
+      */}
+
+      {/* Developer / Testing Back Button */}
+      <div className="dev-back-row">
+        <button
+          type="button"
+          className="dev-back-btn"
+          id="btn-dev-back"
+          onClick={onRestart}
+          title="Developer testing button: returns to registration form"
+        >
+          ← Back to Registration (Dev / Testing)
         </button>
       </div>
     </div>
   );
 };
+

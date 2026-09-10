@@ -193,6 +193,22 @@ function submitRegistration(payload) {
     let submissionId;
     try {
       const sheet = getOrCreateSheet_();
+
+      // Check for duplicate registration against live Google Sheet data
+      const duplicateCheck = checkDuplicateRegistration_(
+        sheet,
+        clean.userType,
+        clean.email,
+        clean.registrationNumber
+      );
+
+      if (duplicateCheck.isDuplicate) {
+        return {
+          status: 'error',
+          message: duplicateCheck.message
+        };
+      }
+
       submissionId = generateSubmissionId_();
       const timestamp = new Date();
       const challengesText = formatChallenges_(clean.challenges);
@@ -237,6 +253,50 @@ function submitRegistration(payload) {
       message: 'An unexpected error occurred while processing your submission: ' + (err && err.message ? err.message : 'Please try again.')
     };
   }
+}
+
+/**
+ * Checks active sheet data for duplicate registrations.
+ * Returns { isDuplicate: boolean, message?: string }
+ */
+function checkDuplicateRegistration_(sheet, userType, email, registrationNumber) {
+  const lastRow = sheet.getLastRow();
+  // If only header row exists (or empty), there are no registrations yet.
+  if (lastRow <= 1) {
+    return { isDuplicate: false };
+  }
+
+  const normEmail = String(email || '').trim().toLowerCase();
+  const normRegNo = String(registrationNumber || '').trim().toLowerCase();
+  const isStudent = userType === 'Student';
+
+  // Read all existing data rows (from row 2 to lastRow)
+  // Column 9 is Registration Number (index 8), Column 10 is Email ID (index 9)
+  const data = sheet.getRange(2, 1, lastRow - 1, 10).getValues();
+
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    const rowRegNo = String(row[8] || '').trim().toLowerCase();
+    const rowEmail = String(row[9] || '').trim().toLowerCase();
+
+    // Check Email Match (for both Student and Faculty)
+    if (normEmail && rowEmail && normEmail === rowEmail) {
+      return {
+        isDuplicate: true,
+        message: 'You have already registered for this hackathon using this Email ID / Registration Number. Duplicate registration is not allowed.'
+      };
+    }
+
+    // Check Registration Number Match (for Students)
+    if (isStudent && normRegNo && rowRegNo && normRegNo === rowRegNo) {
+      return {
+        isDuplicate: true,
+        message: 'You have already registered for this hackathon using this Email ID / Registration Number. Duplicate registration is not allowed.'
+      };
+    }
+  }
+
+  return { isDuplicate: false };
 }
 
 /* ---------------------------------------------------------------------- */
@@ -346,7 +406,7 @@ function validatePayload_(payload) {
   }
 
   if (!Array.isArray(payload.challenges) || payload.challenges.length === 0) {
-    return { valid: false, message: 'Please provide at least one challenge and suggested solution.' };
+    return { valid: false, message: 'Please provide at least one challenge statement / problem identified.' };
   }
   if (payload.challenges.length > MAX_CHALLENGES) {
     return { valid: false, message: 'Too many challenges submitted at once (maximum ' + MAX_CHALLENGES + ').' };
@@ -356,13 +416,15 @@ function validatePayload_(payload) {
   for (let i = 0; i < payload.challenges.length; i++) {
     const pair = payload.challenges[i] || {};
     const challenge = String(pair.challenge || '').trim();
-    const solution = String(pair.solution || '').trim();
+    let solution = String(pair.solution || '').trim();
 
     if (!challenge || challenge.length > LIMITS.challenge) {
-      return { valid: false, message: 'Challenge ' + (i + 1) + ' is required and cannot exceed ' + LIMITS.challenge + ' characters.' };
+      return { valid: false, message: 'Challenge Statement / Problem Identified is required and cannot exceed ' + LIMITS.challenge + ' characters.' };
     }
-    if (!solution || solution.length > LIMITS.solution) {
-      return { valid: false, message: 'Suggested Solution ' + (i + 1) + ' is required and cannot exceed ' + LIMITS.solution + ' characters.' };
+    if (!solution) {
+      solution = 'N/A';
+    } else if (solution.length > LIMITS.solution) {
+      return { valid: false, message: 'Proposed Solution cannot exceed ' + LIMITS.solution + ' characters.' };
     }
     cleanChallenges.push({
       challenge: sanitizeForSheet_(challenge),

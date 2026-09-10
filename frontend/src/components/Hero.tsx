@@ -1,9 +1,28 @@
 import React from 'react';
+import { HACKATHON_CONFIG } from '../data/hackathonConfig';
 
 export const Hero: React.FC = () => {
+  const { partnerOne, partnerTwo, dividerText } = HACKATHON_CONFIG.collaboration;
+
   return (
     <div className="hero">
-      <div className="hero-eyebrow">TechKeey</div>
+      <div className="hero-collaboration-badge">
+        <div className="collab-partner">
+          {partnerOne.logoUrl ? (
+            <img src={partnerOne.logoUrl} alt={partnerOne.name} className="collab-logo" />
+          ) : (
+            <span className="collab-name">{partnerOne.name}</span>
+          )}
+        </div>
+        <span className="collab-divider">{dividerText}</span>
+        <div className="collab-partner">
+          {partnerTwo.logoUrl ? (
+            <img src={partnerTwo.logoUrl} alt={partnerTwo.name} className="collab-logo" />
+          ) : (
+            <span className="collab-name collab-accent">{partnerTwo.name}</span>
+          )}
+        </div>
+      </div>
       <h1 className="hero-title">
         Transforming Campus Bottlenecks Into <span className="accent">Innovative Solutions</span>
       </h1>
@@ -13,3 +32,4 @@ export const Hero: React.FC = () => {
     </div>
   );
 };
+

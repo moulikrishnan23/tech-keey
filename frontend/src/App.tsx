@@ -11,6 +11,7 @@ import { ChallengesStep } from './components/ChallengesStep';
 import { RemarksStep } from './components/RemarksStep';
 import { ReviewSection } from './components/ReviewSection';
 import { SuccessSection } from './components/SuccessSection';
+import { VerticalMarquee } from './components/VerticalMarquee';
 import { ChallengeItem, RegistrationFormData, ValidationErrors, YearOfStudy } from './types';
 import { EducationLevelOption } from './data/academicCourses';
 import { validateForm } from './utils/validation';
@@ -34,15 +35,30 @@ const initialFormData: RegistrationFormData = {
   remarks: '',
 };
 
+const STORAGE_KEY_SUBMISSION_ID = 'techkeey_registered_submission_id';
+
 export const App: React.FC = () => {
   const [formData, setFormData] = useState<RegistrationFormData>(initialFormData);
   const [challengeSeq, setChallengeSeq] = useState<number>(1);
-  const [mode, setMode] = useState<'form' | 'review' | 'success'>('form');
+  const [submissionId, setSubmissionId] = useState<string>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY_SUBMISSION_ID) || '';
+    } catch {
+      return '';
+    }
+  });
+  const [mode, setMode] = useState<'form' | 'review' | 'success'>(() => {
+    try {
+      const savedId = localStorage.getItem(STORAGE_KEY_SUBMISSION_ID);
+      return savedId ? 'success' : 'form';
+    } catch {
+      return 'form';
+    }
+  });
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [topErrorBanner, setTopErrorBanner] = useState<string>('');
   const [reviewErrorBanner, setReviewErrorBanner] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
-  const [submissionId, setSubmissionId] = useState<string>('');
 
   const formStepsRef = useRef<HTMLDivElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
@@ -262,6 +278,11 @@ export const App: React.FC = () => {
       const response = await submitRegistrationApi(formData);
       if (response && response.status === 'success' && response.submissionId) {
         setSubmissionId(response.submissionId);
+        try {
+          localStorage.setItem(STORAGE_KEY_SUBMISSION_ID, response.submissionId);
+        } catch (e) {
+          console.warn('Could not save submission ID to localStorage:', e);
+        }
         setMode('success');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
@@ -278,6 +299,9 @@ export const App: React.FC = () => {
   };
 
   const handleRestart = () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY_SUBMISSION_ID);
+    } catch {}
     setFormData(initialFormData);
     setChallengeSeq(1);
     setMode('form');
@@ -289,8 +313,10 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="wrap">
-      <Topbar />
+    <>
+      <VerticalMarquee />
+      <div className="wrap">
+        <Topbar />
 
       {mode !== 'success' && (
         <div id="main-content">
@@ -400,5 +426,6 @@ export const App: React.FC = () => {
         Tech<span className="accent">Keey</span> &middot; Campus Innovation &amp; Problem-Solving Platform
       </div>
     </div>
+    </>
   );
 };

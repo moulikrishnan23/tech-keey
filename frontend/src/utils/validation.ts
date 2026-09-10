@@ -153,18 +153,15 @@ export function validateForm(data: RegistrationFormData): { isValid: boolean; er
       const sVal = item.solution.trim();
 
       if (!cVal) {
-        itemErr.challenge = 'Please describe the challenge.';
+        itemErr.challenge = 'Please describe the challenge / problem identified.';
         isValid = false;
       } else if (cVal.length > LIMITS.challenge) {
         itemErr.challenge = `Challenge cannot exceed ${LIMITS.challenge} characters.`;
         isValid = false;
       }
 
-      if (!sVal) {
-        itemErr.solution = 'Please suggest a solution.';
-        isValid = false;
-      } else if (sVal.length > LIMITS.solution) {
-        itemErr.solution = `Suggested Solution cannot exceed ${LIMITS.solution} characters.`;
+      if (sVal && sVal.length > LIMITS.solution) {
+        itemErr.solution = `Proposed Solution cannot exceed ${LIMITS.solution} characters.`;
         isValid = false;
       }
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { RegistrationFormData } from '../types';
+import { HACKATHON_CONFIG } from '../data/hackathonConfig';
 
 interface ReviewSectionProps {
   formData: RegistrationFormData;
@@ -108,7 +109,7 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({
                   <div className="review-block-val">{pair.challenge || '—'}</div>
                   <div className="review-solution-label">Suggested Solution:</div>
                   <div className="review-block-val" style={{ marginBottom: 0 }}>
-                    {pair.solution || '—'}
+                    {pair.solution && pair.solution.trim() ? pair.solution : 'N/A'}
                   </div>
                 </div>
               );
@@ -158,7 +159,27 @@ export const ReviewSection: React.FC<ReviewSectionProps> = ({
             )}
           </button>
         </div>
+
+        {/* Post-Submission Instagram Announcement Section */}
+        <div className="submission-notice-card">
+          <div className="notice-icon">📢</div>
+          <div className="notice-content">
+            <p className="notice-text">
+              Notifications / announcements will be posted on our Instagram page. Kindly follow our{' '}
+              <a
+                href={HACKATHON_CONFIG.social.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="notice-link"
+              >
+                Instagram page
+              </a>{' '}
+              for updates.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
+

@@ -59,7 +59,7 @@ export const ChallengesStep: React.FC<ChallengesStepProps> = ({
                 {/* Challenge field */}
                 <div className="field">
                   <label className="field-label">
-                    Challenge Statement<span className="req">*</span>
+                    Challenge Statement / Problem Identified<span className="req">*</span>
                   </label>
                   <textarea
                     className={`challenge-textarea challenge-input ${
@@ -93,14 +93,14 @@ export const ChallengesStep: React.FC<ChallengesStepProps> = ({
                 {/* Solution field */}
                 <div className="field">
                   <label className="field-label">
-                    Proposed Solution &amp; Approach<span className="req">*</span>
+                    Proposed Solution &amp; Approach
                   </label>
                   <textarea
                     className={`solution-textarea solution-input ${
                       itemErrors.solution ? 'invalid' : ''
                     }`}
                     maxLength={LIMITS.solution}
-                    placeholder="Describe your concept, implementation idea, or practical approach..."
+                    placeholder="If you don't have a solution mention N/A"
                     value={item.solution}
                     onChange={(e) => onChangeChallengeField(item.id, 'solution', e.target.value)}
                   />
