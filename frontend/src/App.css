@@ -2231,6 +2231,620 @@ textarea.solution-textarea {
 }
 
 
+/* ============================================================
+   RESPONSIVE ADDITIONS — Full Breakpoint Coverage
+   These rules supplement existing styles. No existing rules
+   are overwritten; only new overrides are added here.
+   ============================================================ */
 
+/* --- Global overflow guard --- */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
 
+/* Prevent flex/grid children from overflowing their container */
+*,
+*::before,
+*::after {
+  min-width: 0;
+}
+
+/* ── 860px and below ─────────────────────────────────────── */
+@media (max-width: 860px) {
+  /* Collaboration logo group in Hero — keep inline but allow wrap */
+  .hero-collaboration-group {
+    gap: 10px;
+  }
+
+  /* Slightly shrink collab logos */
+  .collab-logo-img {
+    height: 42px;
+  }
+  .collab-lesuccess-img {
+    height: 40px;
+  }
+  .collab-techkeey-img {
+    height: 42px;
+  }
+
+  /* Instagram CTA card — icon + text are fine at 860px but start stacking */
+  .instagram-cta-card {
+    gap: 14px;
+    padding: 20px 22px;
+  }
+}
+
+/* ── 768px and below ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Timeline rows: stack label above value on narrow screens
+     to prevent the date value being squeezed off screen */
+  .timeline-list li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    padding-bottom: 10px;
+  }
+
+  .timeline-val {
+    align-self: flex-start;
+  }
+
+  /* Instagram CTA card: stack icon above text on tablets */
+  .instagram-cta-card {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cta-icon-wrapper {
+    align-self: flex-start;
+  }
+
+  /* Tracking card fills width on tablet */
+  .tracking-card {
+    width: 100%;
+    box-sizing: border-box;
+    display: block;
+    text-align: center;
+  }
+
+  /* Resubmission notice: allow text to wrap naturally */
+  .resubmission-block-notice {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* Review rows: stack key above value on tablet to avoid overflow */
+  .review-row {
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 0;
+  }
+
+  .review-key {
+    flex-shrink: 1;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+  }
+
+  .review-val {
+    text-align: left;
+    font-size: 14px;
+  }
+
+  /* Ensure section-head has less bottom margin on tablet */
+  .section-head {
+    margin-bottom: 22px;
+  }
+
+  /* Prize tags wrap cleanly */
+  .prizes-tags {
+    gap: 8px;
+  }
+
+  /* Btn-instagram: allow text to wrap on small tablets */
+  .btn-instagram {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.4;
+  }
+}
+
+/* ── 640px and below ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Hero collaboration logos: shrink a bit more */
+  .hero-collaboration-group {
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .collab-logo-img {
+    height: 36px;
+  }
+  .collab-lesuccess-img {
+    height: 34px;
+  }
+  .collab-techkeey-img {
+    height: 36px;
+  }
+  .collab-divider-symbol {
+    font-size: 22px;
+  }
+
+  /* Logo card: tighter padding */
+  .collab-logo-card {
+    padding: 6px 12px;
+    border-radius: 10px;
+  }
+
+  /* Journey steps: hide arrows on 640px too (already hidden at 768px via existing rule) */
+  .journey-step-arrow {
+    display: none;
+  }
+
+  /* Journey steps: let each step grow full row on very small screens */
+  .journey-step-item {
+    flex: 1 1 100%;
+  }
+
+  /* Instagram CTA: tighter padding on mobile */
+  .instagram-cta-card {
+    padding: 18px 16px;
+    gap: 10px;
+  }
+
+  .cta-title {
+    font-size: 15px;
+  }
+
+  .cta-text {
+    font-size: 13.5px;
+  }
+
+  /* btn-instagram: full width on mobile */
+  .btn-instagram {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    font-size: 13.5px;
+    padding: 10px 16px;
+  }
+
+  /* Tracking card: centered, full width */
+  .tracking-card {
+    padding: 20px 16px;
+    text-align: center;
+  }
+
+  .tracking-value {
+    font-size: clamp(18px, 5.5vw, 26px);
+    word-break: break-all;
+  }
+
+  /* Success section spacing */
+  .success-title {
+    font-size: clamp(20px, 5.5vw, 28px);
+  }
+
+  .success-text {
+    font-size: 14px;
+  }
+
+  /* Process row: let steps wrap cleanly, remove arrows on mobile */
+  .process-row {
+    gap: 8px;
+  }
+
+  .process-step {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+
+  .process-arrow {
+    font-size: 12px;
+  }
+
+  /* Footer note */
+  .footer-note {
+    font-size: 11.5px;
+    padding: 0 16px;
+    margin: 32px 0 20px;
+  }
+
+  /* section-block bottom margin: tighter on mobile */
+  .section-block {
+    margin-bottom: 30px;
+  }
+
+  /* Section head: less gap */
+  .section-head {
+    margin-bottom: 18px;
+  }
+
+  /* Challenge block head: let remove button wrap under label */
+  .challenge-block-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Top error banner: tighter */
+  .top-error-banner {
+    font-size: 13.5px;
+    padding: 12px 15px;
+  }
+
+  /* Sticky role badge: smaller text */
+  .sticky-role-badge-inner {
+    font-size: 12.5px;
+    padding: 7px 14px;
+  }
+
+  /* Resubmission notice text: smaller on mobile */
+  .resubmission-block-notice span {
+    font-size: 13px;
+  }
+
+  /* Hackathon info card: already goes to 26px 20px at 768px;
+     shrink padding for 640px */
+  .hackathon-info-card {
+    padding: 22px 16px;
+  }
+
+  /* Role cards: reduce padding */
+  .role-card {
+    padding: 26px 20px;
+  }
+
+  .role-title {
+    font-size: 18px;
+  }
+
+  .role-icon {
+    width: 46px;
+    height: 46px;
+    margin-bottom: 14px;
+  }
+}
+
+/* ── 480px and below ─────────────────────────────────────── */
+@media (max-width: 480px) {
+  /* Hero event card: shrink more on very small phones */
+  .hero-event-card {
+    max-width: 310px;
+    padding: 10px 16px;
+    border-radius: 18px;
+  }
+
+  .hero-event-img,
+  .hero-eduthon-img {
+    max-width: 268px;
+    max-height: 86px;
+  }
+
+  /* Collab logos: shrink further */
+  .collab-logo-img {
+    height: 30px;
+  }
+  .collab-lesuccess-img {
+    height: 28px;
+  }
+  .collab-techkeey-img {
+    height: 30px;
+  }
+  .collab-divider-symbol {
+    font-size: 18px;
+  }
+  .collab-logo-card {
+    padding: 5px 10px;
+  }
+
+  /* Section cards: tighter padding at 480px */
+  .section-card {
+    padding: 18px 14px;
+  }
+
+  .challenge-block {
+    padding: 16px 12px;
+  }
+
+  .info-subcard {
+    padding: 16px 14px;
+  }
+
+  /* Tracking card */
+  .tracking-card {
+    padding: 16px 14px;
+  }
+
+  /* Prize tag: smaller font */
+  .prize-tag {
+    font-size: 12.5px;
+    padding: 7px 13px;
+  }
+
+  /* Process row: hide arrows on very small screens */
+  .process-arrow {
+    display: none;
+  }
+
+  .process-step {
+    font-size: 11.5px;
+    padding: 7px 12px;
+  }
+
+  /* btn: ensure full width is maintained */
+  .btn {
+    width: 100%;
+    padding: 14px 18px;
+    font-size: 15px;
+  }
+
+  /* Hero about text: smaller line */
+  .journey-about-text {
+    font-size: 13.5px;
+  }
+}
+
+/* ── 375px and below ─────────────────────────────────────── */
+@media (max-width: 375px) {
+  /* Tighter global wrapper padding */
+  .wrap {
+    padding: 0 12px;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 36px 14px 30px;
+  }
+
+  /* Hero event card at very small screens */
+  .hero-event-card {
+    max-width: 270px;
+    padding: 9px 14px;
+    border-radius: 16px;
+  }
+
+  .hero-event-img,
+  .hero-eduthon-img {
+    max-width: 240px;
+    max-height: 78px;
+  }
+
+  /* Event live badge: tighter */
+  .event-live-badge {
+    font-size: 9.5px;
+    padding: 4px 11px;
+    gap: 6px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Collaboration logos: minimal */
+  .collab-logo-img {
+    height: 26px;
+  }
+  .collab-lesuccess-img {
+    height: 24px;
+  }
+  .collab-techkeey-img {
+    height: 26px;
+  }
+  .collab-divider-symbol {
+    font-size: 16px;
+  }
+
+  /* Section card: tightest padding */
+  .section-card {
+    padding: 16px 12px;
+    border-radius: var(--radius-md);
+  }
+
+  /* Hackathon info card */
+  .hackathon-info-card {
+    padding: 18px 13px;
+  }
+
+  .info-subcard {
+    padding: 14px 12px;
+  }
+
+  /* Role cards: minimal */
+  .role-card {
+    padding: 22px 16px;
+  }
+
+  .role-title {
+    font-size: 17px;
+  }
+
+  .role-desc {
+    font-size: 13px;
+  }
+
+  /* Year pills: very small screen — keep 2-col but smaller text */
+  .year-pill {
+    font-size: 13px;
+    padding: 12px 6px;
+  }
+
+  /* Challenge block: minimal padding */
+  .challenge-block {
+    padding: 14px 11px;
+  }
+
+  /* Tracking card: minimal */
+  .tracking-card {
+    padding: 14px 12px;
+  }
+
+  .tracking-value {
+    font-size: clamp(16px, 5vw, 20px);
+  }
+
+  /* Buttons: slightly smaller text */
+  .btn {
+    font-size: 14.5px;
+    padding: 13px 16px;
+  }
+
+  /* Journey card */
+  .journey-card {
+    padding: 20px 14px;
+  }
+
+  /* Instagram CTA */
+  .instagram-cta-card {
+    padding: 14px 12px;
+  }
+
+  /* Process steps wrap naturally at 375px, already shown */
+  .process-step {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+}
+
+/* ── 320px — Absolute minimum ────────────────────────────── */
+@media (max-width: 320px) {
+  .wrap {
+    padding: 0 10px;
+  }
+
+  .hero {
+    padding: 30px 10px 26px;
+    margin: 12px 0 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .hero-event-card {
+    max-width: 244px;
+    padding: 8px 12px;
+    border-radius: 14px;
+  }
+
+  .hero-event-img,
+  .hero-eduthon-img {
+    max-width: 220px;
+    max-height: 70px;
+  }
+
+  /* Collab group: stack if needed */
+  .hero-collaboration-group {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .collab-divider-symbol {
+    font-size: 14px;
+  }
+
+  .section-card {
+    padding: 14px 10px;
+  }
+
+  .hackathon-info-card {
+    padding: 16px 11px;
+  }
+
+  .role-card {
+    padding: 18px 13px;
+  }
+
+  .role-title {
+    font-size: 16px;
+  }
+
+  .section-title {
+    font-size: clamp(18px, 5vw, 22px);
+  }
+
+  .challenge-block {
+    padding: 12px 10px;
+  }
+
+  .tracking-card {
+    padding: 12px 10px;
+  }
+
+  .tracking-value {
+    font-size: clamp(14px, 4.5vw, 18px);
+  }
+
+  .btn {
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+
+  .journey-card {
+    padding: 16px 10px;
+  }
+
+  .info-subcard {
+    padding: 12px 10px;
+  }
+}
+
+/* ── Landscape orientation — small phones ─────────────────── */
+/* e.g. iPhone SE landscape: 667×375px, iPhone 12 landscape: 844×390px */
+@media (max-height: 500px) and (orientation: landscape) {
+  .hero {
+    padding: 28px 24px;
+  }
+
+  .hero-event-wrapper,
+  .hero-eduthon-wrapper {
+    margin: 10px auto 16px;
+  }
+
+  .hero-event-card {
+    padding: 8px 20px;
+  }
+
+  .hero-event-img,
+  .hero-eduthon-img {
+    max-height: 68px;
+  }
+
+  .hero-collaboration-group {
+    margin-bottom: 12px;
+  }
+
+  .journey-card {
+    padding: 16px 20px;
+  }
+
+  .section-card {
+    padding: 20px 22px;
+  }
+}
+
+/* ── SearchableSelect dropdown overflow fix ───────────────── */
+/* Prevent dropdown from overflowing the viewport on narrow screens */
+.searchable-select-dropdown {
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+}
+
+/* ── Safe area insets for notched phones (iPhone X+) ─────── */
+@supports (padding: env(safe-area-inset-left)) {
+  .wrap {
+    padding-left: max(24px, env(safe-area-inset-left));
+    padding-right: max(24px, env(safe-area-inset-right));
+  }
+
+  @media (max-width: 640px) {
+    .wrap {
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+    }
+  }
+
+  @media (max-width: 375px) {
+    .wrap {
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+    }
+  }
+}
 
