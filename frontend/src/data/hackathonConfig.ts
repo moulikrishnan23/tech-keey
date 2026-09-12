@@ -1,25 +1,32 @@
-﻿/**
+/**
  * ============================================================================
  *  TechKeey & LeSuccess — Hackathon Configuration & Central Data
- * ============================================================================
- *  Update all event dates, social links, prizes, and copy here.
- *  Changes made here will instantly reflect across the entire application.
  * ============================================================================
  */
 
 export interface HackathonTimeline {
   startDate: string;
+  lastDateForSubmission: string;
   finaleAnnouncementDate: string;
   grandFinaleDate: string;
-  teamFormationDeadline: string;
 }
 
 export interface MarqueeItem {
-  text: string;
-  color: string;
+  type?: 'text' | 'logo';
+  logo?: 'lesuccess' | 'techkeey';
+  text?: string;
+  color?: string;
+}
+
+export interface JourneyStep {
+  icon: string;
+  title: string;
+  desc: string;
 }
 
 export interface HackathonConfig {
+  eventName: string;
+  introParagraph: string;
   collaboration: {
     partnerOne: {
       name: string;
@@ -31,7 +38,12 @@ export interface HackathonConfig {
     };
     dividerText: string;
   };
-  introParagraph: string;
+  journey: {
+    ribbonTitle: string;
+    aboutTitle: string;
+    aboutText: string;
+    steps: JourneyStep[];
+  };
   timeline: HackathonTimeline;
   prizes: string[];
   teamGuidelines: {
@@ -48,54 +60,83 @@ export interface HackathonConfig {
 }
 
 export const HACKATHON_CONFIG: HackathonConfig = {
+  eventName: 'Idea2Success',
+  introParagraph:
+    'An initiative to identify challenges faced in technical and professional education, build innovative solutions, and transform impactful ideas into functional prototypes.',
   collaboration: {
     partnerOne: {
       name: 'LeSuccess',
-      logoUrl: '',
+      logoUrl: '/LeSuccess.png',
     },
     partnerTwo: {
-      name: 'Techkeey',
-      logoUrl: '',
+      name: 'TechKeey',
+      logoUrl: '/TechKeey.png',
     },
     dividerText: '×',
   },
-  introParagraph:
-    'Welcome to the joint innovation hackathon initiative by LeSuccess and Techkeey. This platform empowers students and faculty members to highlight real campus bottlenecks and turn them into functional prototypes with industry mentorship.',
+  journey: {
+    ribbonTitle: 'JOURNEY FROM IDEAS TO IMPACT',
+    aboutTitle: 'About Idea2Success',
+    aboutText:
+      'An Innovation Challenge for faculty and students to ideate, design and prototype solutions that address real-world EduTech problems.',
+    steps: [
+      {
+        icon: '🎯',
+        title: 'Find Problems',
+        desc: 'Real World Edutech Problems',
+      },
+      {
+        icon: '💡',
+        title: 'Build Solutions',
+        desc: 'Innovative / Expected Solutions',
+      },
+      {
+        icon: '🏆',
+        title: 'Top 25 Teams',
+        desc: 'Based on Performance for Finalists',
+      },
+      {
+        icon: '💼',
+        title: 'Internship / PPO offer',
+        desc: 'For best solutions',
+      },
+    ],
+  },
   timeline: {
-    startDate: 'To be announced',
-    finaleAnnouncementDate: 'To be announced',
-    grandFinaleDate: 'To be announced (at LeSuccess)',
-    teamFormationDeadline: 'To be announced',
+    startDate: '14th Sept 2026',
+    lastDateForSubmission: '20th Sept 2026',
+    finaleAnnouncementDate: '25th Sept at LeSuccess',
+    grandFinaleDate: '5th Oct – 10th Oct',
   },
   prizes: [
     'Cash prizes for winners',
-    'Goodies',
-    'Surprise gifts',
+    'Goodies will be provided',
+    'Surprise Gifts',
     'Internship / Pre-Placement Offer',
   ],
   teamGuidelines: {
     individualSubmission:
-      'Individual students/faculty can submit a challenge that needs to be converted into a prototype',
+      'Individual students / faculty can submit challenges or ideas and turn them into innovative prototypes that break boundaries and shape the future.',
     teamFormation:
-      'Shortlisted candidates can form a team of up to 4 members',
+      'Shortlisted candidates / finalists can form a team of up to 4 members ( Solo participants are welcome )',
     maxTeamSize: 4,
   },
   social: {
-    instagramUrl: 'https://www.instagram.com/',
-    instagramHandle: 'Instagram Page',
+    instagramUrl: 'https://www.instagram.com/lesuccess_official?stkn=cDR6YWRqdzU1aTVo',
+    instagramHandle: 'LeSuccess Official Instagram',
     notificationMessage:
       'Notifications / announcements will be posted on our Instagram page. Kindly follow our Instagram page for updates.',
   },
   marquee: [
-    { text: 'LESUCCESS', color: '#1d2c2d' },
-    { text: '×', color: '#1d2c2d' },
-    { text: 'TECHKEEY', color: '#1d2c2d' },
-    { text: '•', color: '#1d2c2d' },
-    { text: 'HACKATHON', color: '#1d2c2d' },
-    { text: '•', color: '#1d2c2d' },
-    { text: 'PROTOTYPE', color: '#1d2c2d' },
-    { text: '•', color: '#1d2c2d' },
-    { text: 'INNOVATION', color: '#1d2c2d' },
-    { text: '•', color: '#1d2c2d' },
+    { type: 'logo', logo: 'lesuccess' },
+    { type: 'text', text: '×', color: '#1d2c2d' },
+    { type: 'logo', logo: 'techkeey' },
+    { type: 'text', text: '•', color: '#1d2c2d' },
+    { type: 'text', text: 'HACKATHON', color: '#1d2c2d' },
+    { type: 'text', text: '•', color: '#1d2c2d' },
+    { type: 'text', text: 'PROTOTYPE', color: '#1d2c2d' },
+    { type: 'text', text: '•', color: '#1d2c2d' },
+    { type: 'text', text: 'INNOVATION', color: '#1d2c2d' },
+    { type: 'text', text: '•', color: '#1d2c2d' },
   ],
 };

@@ -8,7 +8,7 @@ interface RoleSelectorProps {
 
 export const RoleSelector: React.FC<RoleSelectorProps> = ({ selectedRole, onSelectRole }) => {
   return (
-    <div className="section-block">
+    <div className="section-block" id="role-selector-section">
       <div className="section-card">
         <div className="section-head">
           <div className="section-eyebrow">Step One</div>

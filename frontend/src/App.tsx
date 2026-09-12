@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import { Topbar } from './components/Topbar';
 import { Hero } from './components/Hero';
@@ -12,7 +12,7 @@ import { RemarksStep } from './components/RemarksStep';
 import { ReviewSection } from './components/ReviewSection';
 import { SuccessSection } from './components/SuccessSection';
 import { VerticalMarquee } from './components/VerticalMarquee';
-import { ChallengeItem, RegistrationFormData, ValidationErrors, YearOfStudy } from './types';
+import { RegistrationFormData, ValidationErrors, YearOfStudy } from './types';
 import { EducationLevelOption } from './data/academicCourses';
 import { validateForm } from './utils/validation';
 import { submitRegistrationApi } from './services/api';
@@ -36,9 +36,20 @@ const initialFormData: RegistrationFormData = {
 };
 
 const STORAGE_KEY_SUBMISSION_ID = 'techkeey_registered_submission_id';
+const STORAGE_KEY_FORM_DRAFT = 'techkeey_form_draft';
 
 export const App: React.FC = () => {
-  const [formData, setFormData] = useState<RegistrationFormData>(initialFormData);
+  const [formData, setFormData] = useState<RegistrationFormData>(() => {
+    try {
+      const draft = localStorage.getItem(STORAGE_KEY_FORM_DRAFT);
+      if (draft) return JSON.parse(draft);
+    } catch {}
+    return initialFormData;
+  });
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_FORM_DRAFT, JSON.stringify(formData));
+  }, [formData]);
   const [challengeSeq, setChallengeSeq] = useState<number>(1);
   const [submissionId, setSubmissionId] = useState<string>(() => {
     try {
@@ -90,11 +101,24 @@ export const App: React.FC = () => {
       return next;
     });
 
-    setTimeout(() => {
-      if (formStepsRef.current) {
-        formStepsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const scrollToForm = () => {
+      const target = document.getElementById('step-personal-info') || formStepsRef.current;
+      if (target) {
+        const rect = target.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const targetY = rect.top + scrollTop - 28;
+        if (targetY > 100) {
+          window.scrollTo({
+            top: targetY,
+            behavior: 'smooth',
+          });
+        }
       }
-    }, 80);
+    };
+
+    requestAnimationFrame(() => {
+      setTimeout(scrollToForm, 100);
+    });
   };
 
   // Field change handlers
@@ -180,17 +204,14 @@ export const App: React.FC = () => {
 
   // Dynamic Challenges (preserved for code integrity)
   const handleAddChallenge = () => {
-    const nextSeq = challengeSeq + 1;
-    setChallengeSeq(nextSeq);
-    const newChallenge: ChallengeItem = {
-      id: `c${nextSeq}`,
-      challenge: '',
-      solution: '',
-    };
     setFormData((prev) => ({
       ...prev,
-      challenges: [...prev.challenges, newChallenge],
+      challenges: [
+        ...prev.challenges,
+        { id: `c-${Date.now()}-${challengeSeq}`, challenge: '', solution: '' },
+      ],
     }));
+    setChallengeSeq((s) => s + 1);
   };
 
   const handleRemoveChallenge = (id: string) => {
@@ -229,7 +250,6 @@ export const App: React.FC = () => {
     }
   };
 
-  // Review & Submit
   const handleReview = () => {
     const { isValid, errors: validationErrors } = validateForm(formData);
 
@@ -239,10 +259,16 @@ export const App: React.FC = () => {
       setTimeout(() => {
         const firstInvalid = document.querySelector('.invalid');
         if (firstInvalid) {
+          const formInputs = document.querySelectorAll('.invalid');
+          formInputs.forEach(el => {
+            el.classList.remove('shake-animation');
+            void (el as HTMLElement).offsetWidth;
+            el.classList.add('shake-animation');
+          });
           firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
       }, 50);
-      return;
+      return false;
     }
 
     setErrors({});
@@ -256,11 +282,6 @@ export const App: React.FC = () => {
     }, 80);
   };
 
-  const handleEditSubmission = () => {
-    setMode('form');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const handleSubmit = async () => {
     if (submitting) return;
 
@@ -268,7 +289,7 @@ export const App: React.FC = () => {
     if (!isValid) {
       setErrors(validationErrors);
       setReviewErrorBanner('Please fix the highlighted fields before submitting.');
-      return;
+      return false;
     }
 
     setReviewErrorBanner('');
@@ -280,6 +301,7 @@ export const App: React.FC = () => {
         setSubmissionId(response.submissionId);
         try {
           localStorage.setItem(STORAGE_KEY_SUBMISSION_ID, response.submissionId);
+          localStorage.removeItem(STORAGE_KEY_FORM_DRAFT);
         } catch (e) {
           console.warn('Could not save submission ID to localStorage:', e);
         }
@@ -301,6 +323,7 @@ export const App: React.FC = () => {
   const handleRestart = () => {
     try {
       localStorage.removeItem(STORAGE_KEY_SUBMISSION_ID);
+      localStorage.removeItem(STORAGE_KEY_FORM_DRAFT);
     } catch {}
     setFormData(initialFormData);
     setChallengeSeq(1);
@@ -312,120 +335,148 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const renderFormFields = () => (
+    <>
+      <PersonalInfoStep
+        userType={formData.userType}
+        name={formData.name}
+        registrationNumber={formData.registrationNumber}
+        educationLevel={formData.educationLevel}
+        educationLevelOther={formData.educationLevelOther}
+        stream={formData.stream}
+        course={formData.course}
+        courseOther={formData.courseOther}
+        email={formData.email}
+        mobile={formData.mobile}
+        errors={errors}
+        onChangeName={handleNameChange}
+        onChangeRegNo={handleRegNoChange}
+        onChangeEducationLevel={handleEducationLevelChange}
+        onChangeEducationLevelOther={handleEducationLevelOtherChange}
+        onChangeStream={handleStreamChange}
+        onChangeCourse={handleCourseChange}
+        onChangeCourseOther={handleCourseOtherChange}
+        onChangeEmail={handleEmailChange}
+        onChangeMobile={handleMobileChange}
+      />
+
+      <CollegeInfoStep
+        userType={formData.userType}
+        college={formData.college}
+        yearOfStudy={formData.yearOfStudy}
+        location={formData.location}
+        errors={errors}
+        onChangeCollege={handleCollegeChange}
+        onSelectYear={handleYearChange}
+        onChangeLocation={handleLocationChange}
+      />
+
+      <ChallengesStep
+        challenges={formData.challenges}
+        errors={errors}
+        onAddChallenge={handleAddChallenge}
+        onRemoveChallenge={handleRemoveChallenge}
+        onChangeChallengeField={handleChangeChallengeField}
+      />
+
+      <RemarksStep
+        remarks={formData.remarks}
+        error={errors.remarks}
+        onChangeRemarks={handleRemarksChange}
+      />
+
+      {topErrorBanner && (
+        <div className="top-error-banner show" id="top-error-banner">
+          {topErrorBanner}
+        </div>
+      )}
+    </>
+  );
+
   return (
     <>
       <VerticalMarquee />
       <div className="wrap">
         <Topbar />
 
-      {mode !== 'success' && (
-        <div id="main-content">
-          <Hero />
-          {/* <HowItWorks /> */}
-          <InfoPanel />
+        <main className="main-content">
+          {mode !== 'success' ? (
+            <>
+              <Hero />
+              <InfoPanel />
 
-          {/* Step 1: Role Selection */}
-          <RoleSelector
-            selectedRole={formData.userType}
-            onSelectRole={handleSelectRole}
-          />
+              <div className="section-block">
+                <RoleSelector
+                  selectedRole={formData.userType}
+                  onSelectRole={handleSelectRole}
+                />
+              </div>
 
-          {/* Steps 2-5: Form fields */}
-          {formData.userType && (
-            <div id="rest-of-form" ref={formStepsRef}>
-              <PersonalInfoStep
-                userType={formData.userType}
-                name={formData.name}
-                registrationNumber={formData.registrationNumber}
-                educationLevel={formData.educationLevel}
-                educationLevelOther={formData.educationLevelOther}
-                stream={formData.stream}
-                course={formData.course}
-                courseOther={formData.courseOther}
-                email={formData.email}
-                mobile={formData.mobile}
-                errors={errors}
-                onChangeName={handleNameChange}
-                onChangeRegNo={handleRegNoChange}
-                onChangeEducationLevel={handleEducationLevelChange}
-                onChangeEducationLevelOther={handleEducationLevelOtherChange}
-                onChangeStream={handleStreamChange}
-                onChangeCourse={handleCourseChange}
-                onChangeCourseOther={handleCourseOtherChange}
-                onChangeEmail={handleEmailChange}
-                onChangeMobile={handleMobileChange}
-              />
+              {formData.userType && mode === 'form' && (
+                <div id="rest-of-form" ref={formStepsRef} className="fade-in-slide">
+                  <div className="sticky-role-badge">
+                    <div className="sticky-role-badge-inner">
+                      Registering as: {formData.userType}
+                      <button 
+                        type="button" 
+                        className="edit-btn" 
+                        onClick={() => {
+                          setFormData(prev => ({...prev, userType: ''}));
+                          setTimeout(() => {
+                            const roleSection = document.getElementById('role-selector-section');
+                            if (roleSection) {
+                              const rect = roleSection.getBoundingClientRect();
+                              const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                              window.scrollTo({ top: Math.max(0, rect.top + scrollTop - 20), behavior: 'smooth' });
+                            }
+                          }, 50);
+                        }}
+                      >
+                        Change
+                      </button>
+                    </div>
+                  </div>
 
-              <CollegeInfoStep
-                userType={formData.userType}
-                college={formData.college}
-                yearOfStudy={formData.yearOfStudy}
-                location={formData.location}
-                errors={errors}
-                onChangeCollege={handleCollegeChange}
-                onSelectYear={handleYearChange}
-                onChangeLocation={handleLocationChange}
-              />
+                  {renderFormFields()}
 
-              <ChallengesStep
-                challenges={formData.challenges}
-                errors={errors}
-                onAddChallenge={handleAddChallenge}
-                onRemoveChallenge={handleRemoveChallenge}
-                onChangeChallengeField={handleChangeChallengeField}
-              />
-
-              <RemarksStep
-                remarks={formData.remarks}
-                error={errors.remarks}
-                onChangeRemarks={handleRemarksChange}
-              />
-
-              {topErrorBanner && (
-                <div className="top-error-banner show" id="top-error-banner">
-                  {topErrorBanner}
+                  <div className="btn-row">
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      id="btn-review"
+                      onClick={handleReview}
+                    >
+                      Review Submission
+                    </button>
+                  </div>
                 </div>
               )}
 
-              {mode === 'form' && (
-                <div className="btn-row">
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    id="btn-review"
-                    onClick={handleReview}
-                  >
-                    Review Submission
-                  </button>
-                </div>
-              )}
-
-              {/* Review Section */}
               {mode === 'review' && (
-                <div ref={reviewRef}>
+                <div ref={reviewRef} className="fade-in-slide">
                   <ReviewSection
                     formData={formData}
                     submitting={submitting}
                     errorMessage={reviewErrorBanner}
-                    onEdit={handleEditSubmission}
                     onSubmit={handleSubmit}
-                  />
+                    onSaveEdit={handleReview}
+                  >
+                    {renderFormFields()}
+                  </ReviewSection>
                 </div>
               )}
+            </>
+          ) : (
+            <div className="success-page-wrapper">
+              <SuccessSection submissionId={submissionId} onRestart={handleRestart} />
             </div>
           )}
+        </main>
+
+        <div className="footer-note">
+          Tech<span className="accent">Keey</span> &middot; Campus Innovation &amp; Problem-Solving Platform
         </div>
-      )}
-
-      {/* Success View */}
-      {mode === 'success' && (
-        <SuccessSection submissionId={submissionId} onRestart={handleRestart} />
-      )}
-
-      <div className="footer-note">
-        Tech<span className="accent">Keey</span> &middot; Campus Innovation &amp; Problem-Solving Platform
       </div>
-    </div>
     </>
   );
 };

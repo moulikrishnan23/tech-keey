@@ -100,7 +100,7 @@ export const ChallengesStep: React.FC<ChallengesStepProps> = ({
                       itemErrors.solution ? 'invalid' : ''
                     }`}
                     maxLength={LIMITS.solution}
-                    placeholder="If you don't have a solution mention N/A"
+                    placeholder="If you don't have a solution mention NA"
                     value={item.solution}
                     onChange={(e) => onChangeChallengeField(item.id, 'solution', e.target.value)}
                   />

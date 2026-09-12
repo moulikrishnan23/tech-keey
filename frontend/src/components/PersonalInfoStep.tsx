@@ -57,7 +57,7 @@ export const PersonalInfoStep: React.FC<PersonalInfoStepProps> = ({
   };
 
   return (
-    <div className="section-block">
+    <div className="section-block" id="step-personal-info">
       <div className="section-card">
         <div className="section-head">
           <div className="section-eyebrow">Step Two</div>
