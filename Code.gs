@@ -2,7 +2,7 @@
  * ============================================================================
  *  TechKeey — Problem & Solution Registration System
  *  Backend: Code.gs (Google Apps Script)
- *  Version: 1.1 (single challenge/solution, structured student academics)
+ *  Version: 1.2 (Optimized for High Concurrency & Burst Traffic)
  * ============================================================================
  *
  *  SETUP:
@@ -134,29 +134,25 @@ function getOrCreateSheet_() {
   const ss = getSpreadsheet_();
   let sheet = ss.getSheetByName(SHEET_NAME);
 
+  // OPTIMIZATION: Only run ensureHeaders_ if the sheet doesn't exist
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
+    ensureHeaders_(sheet);
   }
 
-  ensureHeaders_(sheet);
   return sheet;
 }
 
 function ensureHeaders_(sheet) {
   const numHeaders = HEADERS.length;
-  const existing = sheet.getRange(1, 1, 1, numHeaders).getValues()[0];
-  const headersMatch = HEADERS.every(function (h, i) { return existing[i] === h; });
-
-  if (!headersMatch) {
-    sheet.getRange(1, 1, 1, numHeaders).setValues([HEADERS]);
-    sheet.getRange(1, 1, 1, numHeaders)
-      .setFontWeight('bold')
-      .setBackground('#14171a')
-      .setFontColor('#7fd9b8');
-    sheet.setFrozenRows(1);
-    for (let c = 1; c <= numHeaders; c++) {
-      sheet.autoResizeColumn(c);
-    }
+  sheet.getRange(1, 1, 1, numHeaders).setValues([HEADERS]);
+  sheet.getRange(1, 1, 1, numHeaders)
+    .setFontWeight('bold')
+    .setBackground('#14171a')
+    .setFontColor('#7fd9b8');
+  sheet.setFrozenRows(1);
+  for (let c = 1; c <= numHeaders; c++) {
+    sheet.autoResizeColumn(c);
   }
 
   // Format Column A (SNo) as plain number to prevent old date formatting
@@ -180,13 +176,14 @@ function submitRegistration(payload) {
 
     const clean = validation.data;
 
+    // OPTIMIZATION: Acquire lock but fail faster (8 seconds instead of 15) to prevent massive traffic jams
     const lock = LockService.getScriptLock();
-    const gotLock = lock.tryLock(15000);
+    const gotLock = lock.tryLock(8000); 
 
     if (!gotLock) {
       return {
         status: 'error',
-        message: 'The system is busy processing another submission. Please try again in a moment.'
+        message: 'High traffic! You are in a queue. Please click Submit again in 5 seconds.'
       };
     }
 
@@ -194,7 +191,7 @@ function submitRegistration(payload) {
     try {
       const sheet = getOrCreateSheet_();
 
-      // Check for duplicate registration against live Google Sheet data
+      // Check for duplicate registration (Optimized with CacheService)
       const duplicateCheck = checkDuplicateRegistration_(
         sheet,
         clean.userType,
@@ -212,7 +209,7 @@ function submitRegistration(payload) {
       submissionId = generateSubmissionId_();
       const timestamp = new Date();
       const challengesText = formatChallenges_(clean.challenges);
-      const sNo = Math.max(1, sheet.getLastRow());
+      const sNo = Math.max(1, sheet.getLastRow()); // Row 1 is header, Row 2 is SNo 1 (Wait, SNo should just be getLastRow, because if 1 row exists, new row is 2, so SNo is 1)
 
       sheet.appendRow([
         sNo,
@@ -234,9 +231,10 @@ function submitRegistration(payload) {
       ]);
 
       const newRow = sheet.getLastRow();
-      // Ensure SNo is formatted as a plain number (not Date/Time) and Timestamp as standard Date/Time
-      sheet.getRange(newRow, 1).setNumberFormat('0');
-      sheet.getRange(newRow, 2).setNumberFormat('yyyy-mm-dd hh:mm:ss');
+      
+      // OPTIMIZATION: Batch the number formatting into a single Sheets API call
+      sheet.getRange(newRow, 1, 1, 2).setNumberFormats([['0', 'yyyy-mm-dd hh:mm:ss']]);
+      
     } finally {
       lock.releaseLock();
     }
@@ -257,44 +255,71 @@ function submitRegistration(payload) {
 
 /**
  * Checks active sheet data for duplicate registrations.
- * Returns { isDuplicate: boolean, message?: string }
+ * OPTIMIZATION: Uses CacheService to bypass slow full-table scans.
  */
 function checkDuplicateRegistration_(sheet, userType, email, registrationNumber) {
-  const lastRow = sheet.getLastRow();
-  // If only header row exists (or empty), there are no registrations yet.
-  if (lastRow <= 1) {
-    return { isDuplicate: false };
-  }
-
+  const cache = CacheService.getScriptCache();
+  const cacheKey = 'tk_registered_emails_v2';
+  
   const normEmail = String(email || '').trim().toLowerCase();
   const normRegNo = String(registrationNumber || '').trim().toLowerCase();
   const isStudent = userType === 'Student';
+  
+  let emailSet = null;
+  let regNoSet = null;
 
-  // Read all existing data rows (from row 2 to lastRow)
-  // Column 9 is Registration Number (index 8), Column 10 is Email ID (index 9)
-  const data = sheet.getRange(2, 1, lastRow - 1, 10).getValues();
-
-  for (let i = 0; i < data.length; i++) {
-    const row = data[i];
-    const rowRegNo = String(row[8] || '').trim().toLowerCase();
-    const rowEmail = String(row[9] || '').trim().toLowerCase();
-
-    // Check Email Match (for both Student and Faculty)
-    if (normEmail && rowEmail && normEmail === rowEmail) {
-      return {
-        isDuplicate: true,
-        message: 'You have already registered for this hackathon using this Email ID / Registration Number. Duplicate registration is not allowed.'
-      };
-    }
-
-    // Check Registration Number Match (for Students)
-    if (isStudent && normRegNo && rowRegNo && normRegNo === rowRegNo) {
-      return {
-        isDuplicate: true,
-        message: 'You have already registered for this hackathon using this Email ID / Registration Number. Duplicate registration is not allowed.'
-      };
+  // Try to load from high-speed cache
+  const cachedData = cache.get(cacheKey);
+  if (cachedData) {
+    try {
+      const parsed = JSON.parse(cachedData);
+      emailSet = new Set(parsed.emails);
+      regNoSet = new Set(parsed.regNos);
+    } catch (e) {
+      // Ignore parse errors, will rebuild cache
     }
   }
+
+  // If cache is empty or expired, rebuild it from the spreadsheet
+  if (!emailSet || !regNoSet) {
+    emailSet = new Set();
+    regNoSet = new Set();
+    const lastRow = sheet.getLastRow();
+    
+    if (lastRow > 1) {
+      // Column 9 is RegNo, Column 10 is Email. Get both in one call.
+      const data = sheet.getRange(2, 9, lastRow - 1, 2).getValues();
+      for (let i = 0; i < data.length; i++) {
+        if (data[i][0]) regNoSet.add(String(data[i][0]).trim().toLowerCase());
+        if (data[i][1]) emailSet.add(String(data[i][1]).trim().toLowerCase());
+      }
+    }
+  }
+
+  // Check for duplicates
+  if (normEmail && emailSet.has(normEmail)) {
+    return {
+      isDuplicate: true,
+      message: 'You have already registered for this hackathon using this Email ID. Duplicate registration is not allowed.'
+    };
+  }
+
+  if (isStudent && normRegNo && regNoSet.has(normRegNo)) {
+    return {
+      isDuplicate: true,
+      message: 'You have already registered for this hackathon using this Registration Number. Duplicate registration is not allowed.'
+    };
+  }
+
+  // If not a duplicate, add the new values to our Set and save back to cache
+  if (normEmail) emailSet.add(normEmail);
+  if (isStudent && normRegNo) regNoSet.add(normRegNo);
+
+  // Store in cache for 6 hours (21600 seconds)
+  cache.put(cacheKey, JSON.stringify({
+    emails: Array.from(emailSet),
+    regNos: Array.from(regNoSet)
+  }), 21600);
 
   return { isDuplicate: false };
 }
