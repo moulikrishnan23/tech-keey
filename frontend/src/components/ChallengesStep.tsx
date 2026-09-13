@@ -18,7 +18,7 @@ export const ChallengesStep: React.FC<ChallengesStepProps> = ({
   onChangeChallengeField,
 }) => {
   return (
-    <div className="section-block">
+    <div className="section-block" id="step-challenges">
       <div className="section-card">
         <div className="section-head">
           <div className="section-eyebrow">Step Four</div>
@@ -93,7 +93,7 @@ export const ChallengesStep: React.FC<ChallengesStepProps> = ({
                 {/* Solution field */}
                 <div className="field">
                   <label className="field-label">
-                    Proposed Solution &amp; Approach
+                    Proposed Solution &amp; Approach<span className="req">*</span>
                   </label>
                   <textarea
                     className={`solution-textarea solution-input ${

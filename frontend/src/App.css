@@ -581,7 +581,50 @@ html, body {
 
 /* ============ SECTION SHELL ============ */
 .section-block {
+  position: relative;
   margin-bottom: 44px;
+}
+
+/* Stacking order for form steps so dropdowns naturally overlay subsequent cards */
+#step-personal-info {
+  z-index: 30;
+}
+
+#step-college-info {
+  z-index: 20;
+}
+
+#step-challenges {
+  z-index: 10;
+}
+
+#step-remarks {
+  z-index: 5;
+}
+
+/* When a dropdown is open inside any section card/block, elevate it above all cards */
+.section-block.dropdown-active,
+.section-block:has(.searchable-select-dropdown) {
+  position: relative;
+  z-index: 60 !important;
+}
+
+.section-card.dropdown-active,
+.section-card:has(.searchable-select-dropdown) {
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+  z-index: 60 !important;
+}
+
+.field.dropdown-active,
+.field:has(.searchable-select-dropdown) {
+  position: relative;
+  z-index: 70 !important;
+}
+
+.searchable-select-dropdown {
+  z-index: 1000 !important;
 }
 
 .section-card {
@@ -603,7 +646,7 @@ html, body {
 }
 
 /* Dim inactive cards when the form has focus */
-#rest-of-form:focus-within .section-card:not(:focus-within) {
+#rest-of-form:focus-within .section-card:not(:focus-within):not(.dropdown-active) {
   opacity: 0.7;
   filter: grayscale(15%);
   transform: scale(0.99);

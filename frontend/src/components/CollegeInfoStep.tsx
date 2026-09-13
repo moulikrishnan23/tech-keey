@@ -27,7 +27,7 @@ export const CollegeInfoStep: React.FC<CollegeInfoStepProps> = ({
   const isStudent = userType === 'Student';
 
   return (
-    <div className="section-block">
+    <div className="section-block" id="step-college-info">
       <div className="section-card">
         <div className="section-head">
           <div className="section-eyebrow">Step Three</div>

@@ -447,8 +447,9 @@ function validatePayload_(payload) {
       return { valid: false, message: 'Challenge Statement / Problem Identified is required and cannot exceed ' + LIMITS.challenge + ' characters.' };
     }
     if (!solution) {
-      solution = 'N/A';
-    } else if (solution.length > LIMITS.solution) {
+      return { valid: false, message: 'Proposed Solution & Approach is required.' };
+    }
+    if (solution.length > LIMITS.solution) {
       return { valid: false, message: 'Proposed Solution cannot exceed ' + LIMITS.solution + ' characters.' };
     }
     cleanChallenges.push({

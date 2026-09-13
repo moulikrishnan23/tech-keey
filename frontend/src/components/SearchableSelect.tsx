@@ -58,6 +58,30 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     }
   }, [isOpen]);
 
+  // Elevate parent section card and section block when dropdown is open
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const card = containerRef.current.closest('.section-card');
+    const block = containerRef.current.closest('.section-block');
+    const field = containerRef.current.closest('.field');
+
+    if (isOpen) {
+      card?.classList.add('dropdown-active');
+      block?.classList.add('dropdown-active');
+      field?.classList.add('dropdown-active');
+    } else {
+      card?.classList.remove('dropdown-active');
+      block?.classList.remove('dropdown-active');
+      field?.classList.remove('dropdown-active');
+    }
+
+    return () => {
+      card?.classList.remove('dropdown-active');
+      block?.classList.remove('dropdown-active');
+      field?.classList.remove('dropdown-active');
+    };
+  }, [isOpen]);
+
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) {
@@ -100,8 +124,8 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   return (
     <div
       ref={containerRef}
-      className="searchable-select-container"
-      style={{ position: 'relative', width: '100%' }}
+      className={`searchable-select-container ${isOpen ? 'is-open dropdown-active' : ''}`}
+      style={{ position: 'relative', width: '100%', zIndex: isOpen ? 50 : 'auto' }}
       onKeyDown={handleKeyDown}
     >
       {/* Trigger Button */}
@@ -193,7 +217,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
             border: '1.5px solid var(--border-strong)',
             borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-card)',
-            zIndex: 100,
+            zIndex: 1000,
             overflow: 'hidden',
             animation: 'dropdownIn 0.2s ease',
           }}

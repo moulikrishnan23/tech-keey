@@ -160,7 +160,10 @@ export function validateForm(data: RegistrationFormData): { isValid: boolean; er
         isValid = false;
       }
 
-      if (sVal && sVal.length > LIMITS.solution) {
+      if (!sVal) {
+        itemErr.solution = 'Please describe your proposed solution / approach.';
+        isValid = false;
+      } else if (sVal.length > LIMITS.solution) {
         itemErr.solution = `Proposed Solution cannot exceed ${LIMITS.solution} characters.`;
         isValid = false;
       }

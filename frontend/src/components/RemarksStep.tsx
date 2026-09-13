@@ -15,7 +15,7 @@ export const RemarksStep: React.FC<RemarksStepProps> = ({
   const len = remarks.length;
 
   return (
-    <div className="section-block">
+    <div className="section-block" id="step-remarks">
       <div className="section-card">
         <div className="section-head">
           <div className="section-eyebrow">Step Five</div>
