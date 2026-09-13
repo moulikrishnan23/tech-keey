@@ -964,8 +964,9 @@ label.field-label {
   margin-bottom: 9px;
 }
 
-label.field-label .req {
-  color: var(--accent-deep);
+label.field-label .req,
+.req {
+  color: #dc2626;
   margin-left: 3px;
 }
 

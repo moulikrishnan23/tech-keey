@@ -11,7 +11,7 @@ interface SuccessSectionProps {
 
 export const SuccessSection: React.FC<SuccessSectionProps> = ({
   submissionId,
-  onRestart,
+  onRestart: _onRestart,
 }) => {
   useEffect(() => {
     // Fire a single realistic confetti burst when success page loads
@@ -195,7 +195,7 @@ export const SuccessSection: React.FC<SuccessSectionProps> = ({
       */}
 
       {/* Developer / Testing Back Button */}
-      <div className="dev-back-row">
+      {/* <div className="dev-back-row">
         <button
           type="button"
           className="dev-back-btn"
@@ -205,7 +205,7 @@ export const SuccessSection: React.FC<SuccessSectionProps> = ({
         >
           ← Back to Registration (Dev / Testing)
         </button>
-      </div>
+      </div> */}
     </div>
   );
 };
