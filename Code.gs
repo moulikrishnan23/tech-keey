@@ -2,7 +2,7 @@
  * ============================================================================
  *  TechKeey — Problem & Solution Registration System
  *  Backend: Code.gs (Google Apps Script)
- *  Version: 1.2 (Optimized for High Concurrency & Burst Traffic)
+ *  Version: 1.3 (Optimized Concurrency + Permanent Master Ledger Duplication Protection)
  * ============================================================================
  *
  *  SETUP:
@@ -13,6 +13,7 @@
 
 const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID';
 const SHEET_NAME = 'TechKeey_Submissions';
+const MASTER_LOG_SHEET_NAME = '_Master_Registration_Log';
 
 const HEADERS = [
   'SNo',
@@ -31,6 +32,18 @@ const HEADERS = [
   'Location',
   'Challenges & Solutions',
   'Remarks'
+];
+
+const MASTER_HEADERS = [
+  'SNo',
+  'Timestamp',
+  'Submission ID',
+  'User Type',
+  'Name',
+  'Email ID',
+  'Mobile Number',
+  'Registration Number',
+  'College Name'
 ];
 
 const LIMITS = {
@@ -134,7 +147,6 @@ function getOrCreateSheet_() {
   const ss = getSpreadsheet_();
   let sheet = ss.getSheetByName(SHEET_NAME);
 
-  // OPTIMIZATION: Only run ensureHeaders_ if the sheet doesn't exist
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
     ensureHeaders_(sheet);
@@ -155,8 +167,109 @@ function ensureHeaders_(sheet) {
     sheet.autoResizeColumn(c);
   }
 
-  // Format Column A (SNo) as plain number to prevent old date formatting
+  // Format Column A (SNo) as plain number and Column B (Timestamp) as text
   sheet.getRange('A:A').setNumberFormat('0');
+  sheet.getRange('B:B').setNumberFormat('@');
+  sheet.getRange('K:K').setNumberFormat('@'); // Column K is Mobile Number
+}
+
+/**
+ * Gets or creates the permanent hidden master log sheet.
+ * This sheet acts as an immutable ledger to track all registrations
+ * even if rows are deleted from the main visible submissions sheet.
+ */
+function getOrCreateMasterLogSheet_() {
+  const ss = getSpreadsheet_();
+  let masterSheet = ss.getSheetByName(MASTER_LOG_SHEET_NAME);
+
+  if (!masterSheet) {
+    masterSheet = ss.insertSheet(MASTER_LOG_SHEET_NAME);
+    ensureMasterHeaders_(masterSheet);
+    try {
+      masterSheet.hideSheet();
+    } catch (e) {
+      console.warn('Could not hide master log sheet: ' + e);
+    }
+    // Automatically backfill from main submission sheet if it already has records
+    syncSubmissionsToMaster_(masterSheet);
+  }
+
+  return masterSheet;
+}
+
+function ensureMasterHeaders_(sheet) {
+  const numHeaders = MASTER_HEADERS.length;
+  sheet.getRange(1, 1, 1, numHeaders).setValues([MASTER_HEADERS]);
+  sheet.getRange(1, 1, 1, numHeaders)
+    .setFontWeight('bold')
+    .setBackground('#1f2937')
+    .setFontColor('#f9fafb');
+  sheet.setFrozenRows(1);
+  for (let c = 1; c <= numHeaders; c++) {
+    sheet.autoResizeColumn(c);
+  }
+
+  sheet.getRange('A:A').setNumberFormat('0');
+  sheet.getRange('B:B').setNumberFormat('@');
+  sheet.getRange('G:G').setNumberFormat('@'); // Mobile Number as text
+}
+
+/**
+ * Synchronizes existing submissions from TechKeey_Submissions to _Master_Registration_Log.
+ */
+function syncSubmissionsToMaster_(masterSheet) {
+  try {
+    const ss = getSpreadsheet_();
+    const mainSheet = ss.getSheetByName(SHEET_NAME);
+    if (!mainSheet) return;
+
+    const mainLastRow = mainSheet.getLastRow();
+    if (mainLastRow <= 1) return;
+
+    const masterLastRow = masterSheet.getLastRow();
+    if (masterLastRow > 1) return; // Already populated
+
+    // Main sheet columns: 
+    // Col 1: SNo, Col 2: Timestamp, Col 3: Submission ID, Col 4: User Type, Col 5: Name,
+    // Col 9: Registration Number, Col 10: Email ID, Col 11: Mobile Number, Col 12: College Name
+    const rawData = mainSheet.getRange(2, 1, mainLastRow - 1, 12).getValues();
+    const rowsToAppend = [];
+
+    for (let i = 0; i < rawData.length; i++) {
+      const row = rawData[i];
+      const sNo = row[0] || (i + 1);
+      const timestamp = row[1] instanceof Date 
+        ? Utilities.formatDate(row[1], 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ss') 
+        : String(row[1] || '');
+      const subId = String(row[2] || '');
+      const userType = String(row[3] || '');
+      const name = String(row[4] || '');
+      const regNo = String(row[8] || '');
+      const email = String(row[9] || '');
+      const mobile = String(row[10] || '');
+      const college = String(row[11] || '');
+
+      rowsToAppend.push([
+        sNo,
+        timestamp,
+        subId,
+        userType,
+        name,
+        email,
+        mobile,
+        regNo,
+        college
+      ]);
+    }
+
+    if (rowsToAppend.length > 0) {
+      masterSheet.getRange(2, 1, rowsToAppend.length, MASTER_HEADERS.length).setValues(rowsToAppend);
+      masterSheet.getRange(2, 1, rowsToAppend.length, 2).setNumberFormats(rowsToAppend.map(function() { return ['0', '@']; }));
+      masterSheet.getRange(2, 7, rowsToAppend.length, 1).setNumberFormat('@');
+    }
+  } catch (err) {
+    console.warn('syncSubmissionsToMaster_ warning: ' + err);
+  }
 }
 
 /* ---------------------------------------------------------------------- */
@@ -176,7 +289,7 @@ function submitRegistration(payload) {
 
     const clean = validation.data;
 
-    // OPTIMIZATION: Acquire lock but fail faster (8 seconds instead of 15) to prevent massive traffic jams
+    // OPTIMIZATION: Acquire lock but fail faster (8 seconds) to prevent massive traffic jams
     const lock = LockService.getScriptLock();
     const gotLock = lock.tryLock(8000); 
 
@@ -190,13 +303,15 @@ function submitRegistration(payload) {
     let submissionId;
     try {
       const sheet = getOrCreateSheet_();
+      const masterSheet = getOrCreateMasterLogSheet_();
 
-      // Check for duplicate registration (Optimized with CacheService)
+      // Check for duplicate registration against permanent master log (Optimized with CacheService)
       const duplicateCheck = checkDuplicateRegistration_(
-        sheet,
+        masterSheet,
         clean.userType,
         clean.email,
-        clean.registrationNumber
+        clean.registrationNumber,
+        clean.mobile
       );
 
       if (duplicateCheck.isDuplicate) {
@@ -206,14 +321,18 @@ function submitRegistration(payload) {
         };
       }
 
-      submissionId = generateSubmissionId_();
-      const timestamp = new Date();
+      const timeZone = getTimeZone_();
+      const now = new Date();
+      submissionId = generateSubmissionId_(timeZone, now);
+      const timestampStr = Utilities.formatDate(now, timeZone, 'yyyy-MM-dd HH:mm:ss');
       const challengesText = formatChallenges_(clean.challenges);
-      const sNo = Math.max(1, sheet.getLastRow()); // Row 1 is header, Row 2 is SNo 1 (Wait, SNo should just be getLastRow, because if 1 row exists, new row is 2, so SNo is 1)
+      const sNo = Math.max(1, sheet.getLastRow()); // Row 1 is header, Row 2 is SNo 1
+      const masterSNo = Math.max(1, masterSheet.getLastRow());
 
+      // 1. Append to visible submissions sheet
       sheet.appendRow([
         sNo,
-        timestamp,
+        timestampStr,
         submissionId,
         clean.userType,
         clean.name,
@@ -231,9 +350,30 @@ function submitRegistration(payload) {
       ]);
 
       const newRow = sheet.getLastRow();
-      
-      // OPTIMIZATION: Batch the number formatting into a single Sheets API call
-      sheet.getRange(newRow, 1, 1, 2).setNumberFormats([['0', 'yyyy-mm-dd hh:mm:ss']]);
+      sheet.getRange(newRow, 1, 1, 2).setNumberFormats([['0', '@']]);
+      sheet.getRange(newRow, 11, 1, 1).setNumberFormat('@');
+
+      // 2. Dual-write to permanent master log sheet (hidden)
+      masterSheet.appendRow([
+        masterSNo,
+        timestampStr,
+        submissionId,
+        clean.userType,
+        clean.name,
+        clean.email,
+        clean.mobile,
+        clean.registrationNumber,
+        clean.college
+      ]);
+
+      const newMasterRow = masterSheet.getLastRow();
+      masterSheet.getRange(newMasterRow, 1, 1, 2).setNumberFormats([['0', '@']]);
+      masterSheet.getRange(newMasterRow, 7, 1, 1).setNumberFormat('@');
+
+      // 3. Update cache with new user's identifiers
+      if (typeof duplicateCheck.updateCache === 'function') {
+        duplicateCheck.updateCache();
+      }
       
     } finally {
       lock.releaseLock();
@@ -254,49 +394,59 @@ function submitRegistration(payload) {
 }
 
 /**
- * Checks active sheet data for duplicate registrations.
+ * Checks permanent master sheet data for duplicate registrations.
+ * Validates Email ID (all), Mobile Number (all), and Registration Number (students).
  * OPTIMIZATION: Uses CacheService to bypass slow full-table scans.
  */
-function checkDuplicateRegistration_(sheet, userType, email, registrationNumber) {
+function checkDuplicateRegistration_(masterSheet, userType, email, registrationNumber, mobile) {
   const cache = CacheService.getScriptCache();
-  const cacheKey = 'tk_registered_emails_v2';
+  const cacheKey = 'tk_master_registered_v3';
   
   const normEmail = String(email || '').trim().toLowerCase();
   const normRegNo = String(registrationNumber || '').trim().toLowerCase();
+  const normMobile = String(mobile || '').replace(/\D/g, ''); // Extract digits
   const isStudent = userType === 'Student';
   
   let emailSet = null;
   let regNoSet = null;
+  let mobileSet = null;
 
   // Try to load from high-speed cache
   const cachedData = cache.get(cacheKey);
   if (cachedData) {
     try {
       const parsed = JSON.parse(cachedData);
-      emailSet = new Set(parsed.emails);
-      regNoSet = new Set(parsed.regNos);
+      emailSet = new Set(parsed.emails || []);
+      regNoSet = new Set(parsed.regNos || []);
+      mobileSet = new Set(parsed.mobiles || []);
     } catch (e) {
       // Ignore parse errors, will rebuild cache
     }
   }
 
-  // If cache is empty or expired, rebuild it from the spreadsheet
-  if (!emailSet || !regNoSet) {
+  // If cache is empty or expired, rebuild it from the master sheet
+  if (!emailSet || !regNoSet || !mobileSet) {
     emailSet = new Set();
     regNoSet = new Set();
-    const lastRow = sheet.getLastRow();
+    mobileSet = new Set();
+    const lastRow = masterSheet.getLastRow();
     
     if (lastRow > 1) {
-      // Column 9 is RegNo, Column 10 is Email. Get both in one call.
-      const data = sheet.getRange(2, 9, lastRow - 1, 2).getValues();
+      // In masterSheet: Col 6: Email ID, Col 7: Mobile Number, Col 8: Registration Number
+      const data = masterSheet.getRange(2, 6, lastRow - 1, 3).getValues();
       for (let i = 0; i < data.length; i++) {
-        if (data[i][0]) regNoSet.add(String(data[i][0]).trim().toLowerCase());
-        if (data[i][1]) emailSet.add(String(data[i][1]).trim().toLowerCase());
+        const em = String(data[i][0] || '').trim().toLowerCase();
+        const mob = String(data[i][1] || '').replace(/\D/g, '');
+        const reg = String(data[i][2] || '').trim().toLowerCase();
+
+        if (em) emailSet.add(em);
+        if (mob) mobileSet.add(mob);
+        if (reg) regNoSet.add(reg);
       }
     }
   }
 
-  // Check for duplicates
+  // 1. Check Email duplicate
   if (normEmail && emailSet.has(normEmail)) {
     return {
       isDuplicate: true,
@@ -304,6 +454,15 @@ function checkDuplicateRegistration_(sheet, userType, email, registrationNumber)
     };
   }
 
+  // 2. Check Mobile duplicate
+  if (normMobile && mobileSet.has(normMobile)) {
+    return {
+      isDuplicate: true,
+      message: 'You have already registered for this hackathon using this Mobile Number. Duplicate registration is not allowed.'
+    };
+  }
+
+  // 3. Check Registration Number duplicate (students only)
   if (isStudent && normRegNo && regNoSet.has(normRegNo)) {
     return {
       isDuplicate: true,
@@ -311,30 +470,50 @@ function checkDuplicateRegistration_(sheet, userType, email, registrationNumber)
     };
   }
 
-  // If not a duplicate, add the new values to our Set and save back to cache
-  if (normEmail) emailSet.add(normEmail);
-  if (isStudent && normRegNo) regNoSet.add(normRegNo);
+  return { 
+    isDuplicate: false,
+    updateCache: function() {
+      if (normEmail) emailSet.add(normEmail);
+      if (normMobile) mobileSet.add(normMobile);
+      if (isStudent && normRegNo) regNoSet.add(normRegNo);
 
-  // Store in cache for 6 hours (21600 seconds)
-  cache.put(cacheKey, JSON.stringify({
-    emails: Array.from(emailSet),
-    regNos: Array.from(regNoSet)
-  }), 21600);
-
-  return { isDuplicate: false };
+      // Store in cache for 6 hours (21600 seconds)
+      try {
+        cache.put(cacheKey, JSON.stringify({
+          emails: Array.from(emailSet),
+          mobiles: Array.from(mobileSet),
+          regNos: Array.from(regNoSet)
+        }), 21600);
+      } catch (e) {
+        console.warn('Cache write warning: ' + e);
+      }
+    }
+  };
 }
 
 /* ---------------------------------------------------------------------- */
-/* Submission ID generation (concurrency-safe, resets daily)               */
+/* Timezone and Submission ID generation (concurrency-safe, resets daily) */
 /* ---------------------------------------------------------------------- */
 
-function generateSubmissionId_() {
-  let timeZone = 'Etc/UTC';
+function getTimeZone_() {
   try {
-    timeZone = Session.getScriptTimeZone() || 'Etc/UTC';
+    const active = SpreadsheetApp.getActiveSpreadsheet();
+    if (active) {
+      const tz = active.getSpreadsheetTimeZone();
+      if (tz && tz !== 'Etc/GMT' && tz !== 'Etc/UTC') return tz;
+    }
   } catch (e) {}
+  try {
+    const tz = Session.getScriptTimeZone();
+    if (tz && tz !== 'Etc/GMT' && tz !== 'Etc/UTC') return tz;
+  } catch (e) {}
+  return 'Asia/Kolkata'; // Event timezone (IST) default
+}
 
-  const today = Utilities.formatDate(new Date(), timeZone, 'yyyyMMdd');
+function generateSubmissionId_(timeZone, now) {
+  const tz = timeZone || getTimeZone_();
+  const dateObj = now || new Date();
+  const today = Utilities.formatDate(dateObj, tz, 'yyyyMMdd');
   const key = 'TK_COUNTER_' + today;
 
   let counter = 1;
@@ -505,3 +684,58 @@ function sanitizeForSheet_(value) {
 
   return text;
 }
+
+/**
+ * One-time utility function to:
+ * 1. Set spreadsheet timezone to Asia/Kolkata (IST).
+ * 2. Synchronize and fix existing timestamps in TechKeey_Submissions.
+ * 3. Initialize and backfill _Master_Registration_Log from TechKeey_Submissions if needed.
+ * 
+ * Run this function once from the Apps Script editor toolbar if needed.
+ */
+function fixSpreadsheetTimezoneAndTimestamps() {
+  const ss = getSpreadsheet_();
+  ss.setSpreadsheetTimeZone('Asia/Kolkata');
+  const sheet = ss.getSheetByName(SHEET_NAME);
+  
+  if (sheet) {
+    const lastRow = sheet.getLastRow();
+    if (lastRow >= 2) {
+      const range = sheet.getRange(2, 2, lastRow - 1, 2); // Column B (Timestamp) and Column C (Submission ID)
+      const values = range.getValues();
+
+      for (let i = 0; i < values.length; i++) {
+        const ts = values[i][0];
+        const subId = String(values[i][1] || '');
+
+        // Extract date from Submission ID e.g. TK-20260914-0001 -> 2026-09-14
+        const match = subId.match(/TK-(\d{4})(\d{2})(\d{2})-/);
+        if (match && ts instanceof Date) {
+          const targetDatePrefix = `${match[1]}-${match[2]}-${match[3]}`;
+          const timePart = Utilities.formatDate(ts, 'Asia/Kolkata', 'HH:mm:ss');
+          values[i][0] = `${targetDatePrefix} ${timePart}`;
+        } else if (ts instanceof Date) {
+          values[i][0] = Utilities.formatDate(ts, 'Asia/Kolkata', 'yyyy-MM-dd HH:mm:ss');
+        }
+      }
+
+      sheet.getRange(2, 2, lastRow - 1, 1).setNumberFormat('@').setValues(values.map(function(r) { return [r[0]]; }));
+      sheet.getRange(2, 11, lastRow - 1, 1).setNumberFormat('@'); // Mobile as text
+    }
+  }
+
+  // Ensure Master Log is initialized and synchronized
+  const masterSheet = getOrCreateMasterLogSheet_();
+  if (masterSheet && sheet) {
+    syncSubmissionsToMaster_(masterSheet);
+  }
+
+  // Clear script cache so it rebuilds fresh from the master log
+  try {
+    CacheService.getScriptCache().remove('tk_master_registered_v3');
+    CacheService.getScriptCache().remove('tk_registered_emails_v2');
+  } catch (e) {}
+
+  console.log('Successfully updated timestamps, master ledger log, and synchronized timezone to Asia/Kolkata!');
+}
+
