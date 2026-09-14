@@ -52,21 +52,8 @@ export const App: React.FC = () => {
   }, [formData]);
 
   const [challengeSeq, setChallengeSeq] = useState<number>(1);
-  const [submissionId, setSubmissionId] = useState<string>(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEY_SUBMISSION_ID) || '';
-    } catch {
-      return '';
-    }
-  });
-  const [mode, setMode] = useState<'form' | 'review' | 'success'>(() => {
-    try {
-      const savedId = localStorage.getItem(STORAGE_KEY_SUBMISSION_ID);
-      return savedId ? 'success' : 'form';
-    } catch {
-      return 'form';
-    }
-  });
+  const [submissionId, setSubmissionId] = useState<string>('');
+  const [mode, setMode] = useState<'form' | 'review' | 'success' | 'checking'>('checking');
 
   // Verify stored submission against live Google Sheet on page load/refresh
   useEffect(() => {
@@ -74,18 +61,29 @@ export const App: React.FC = () => {
     if (savedId) {
       verifySubmissionApi(savedId)
         .then((res) => {
-          if (res && res.valid === false) {
+          if (res && res.valid === true) {
+            setSubmissionId(savedId);
+            setMode('success');
+          } else {
             // Submission was deleted from Google Sheet: clear old status and open registration form
             try {
               localStorage.removeItem(STORAGE_KEY_SUBMISSION_ID);
+              localStorage.removeItem(STORAGE_KEY_FORM_DRAFT);
             } catch {}
             setSubmissionId('');
+            setFormData(initialFormData);
             setMode('form');
           }
         })
-        .catch((e) => {
-          console.warn('Live Google Sheet submission verification warning:', e);
+        .catch(() => {
+          try {
+            localStorage.removeItem(STORAGE_KEY_SUBMISSION_ID);
+          } catch {}
+          setSubmissionId('');
+          setMode('form');
         });
+    } else {
+      setMode('form');
     }
   }, []);
   const [errors, setErrors] = useState<ValidationErrors>({});
@@ -426,7 +424,14 @@ export const App: React.FC = () => {
         <Topbar />
 
         <main className="main-content">
-          {mode !== 'success' ? (
+          {mode === 'checking' ? (
+            <div className="section-block fade-in-slide">
+              <div className="section-card" style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div className="spinner" style={{ width: '36px', height: '36px', borderWidth: '3px', borderColor: '#0f7a5c', borderTopColor: 'transparent', margin: '0 auto 16px', display: 'inline-block' }} />
+                <p style={{ color: '#6b7280', fontSize: '15px' }}>Verifying registration status...</p>
+              </div>
+            </div>
+          ) : mode !== 'success' ? (
             <>
               <Hero />
               <InfoPanel />

@@ -213,7 +213,7 @@ export async function verifySubmissionApi(submissionId: string): Promise<{ valid
       try {
         (window.google!.script!.run as any)
           .withSuccessHandler((res: { valid: boolean }) => {
-            resolve({ valid: Boolean(res && res.valid) });
+            resolve({ valid: Boolean(res && res.valid === true) });
           })
           .withFailureHandler(() => {
             resolve({ valid: false });
@@ -232,7 +232,7 @@ export async function verifySubmissionApi(submissionId: string): Promise<{ valid
 
   if (webAppUrl) {
     try {
-      const url = new URL(webAppUrl);
+      const url = new URL(webAppUrl, window.location.href);
       url.searchParams.set('action', 'verifySubmission');
       url.searchParams.set('submissionId', submissionId.trim());
 
@@ -243,16 +243,20 @@ export async function verifySubmissionApi(submissionId: string): Promise<{ valid
       });
 
       const text = await res.text();
+      // If server returned HTML (e.g. login required or un-updated deployment), it's invalid
+      if (text.trim().startsWith('<') || text.includes('<!DOCTYPE')) {
+        return { valid: false };
+      }
+
       const data = JSON.parse(text);
-      return { valid: Boolean(data && data.valid) };
+      return { valid: Boolean(data && data.valid === true) };
     } catch (err) {
-      console.warn('verifySubmissionApi network warning:', err);
-      // In case of network interruption, don't aggressively invalidate
-      return { valid: true };
+      console.warn('verifySubmissionApi error:', err);
+      return { valid: false };
     }
   }
 
   // Local development fallback
-  return { valid: true };
+  return { valid: false };
 }
 
