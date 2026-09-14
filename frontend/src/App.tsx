@@ -15,7 +15,7 @@ import { VerticalMarquee } from './components/VerticalMarquee';
 import { RegistrationFormData, ValidationErrors, YearOfStudy } from './types';
 import { EducationLevelOption } from './data/academicCourses';
 import { validateForm } from './utils/validation';
-import { submitRegistrationApi } from './services/api';
+import { submitRegistrationApi, verifySubmissionApi } from './services/api';
 
 const initialFormData: RegistrationFormData = {
   userType: '',
@@ -50,6 +50,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_FORM_DRAFT, JSON.stringify(formData));
   }, [formData]);
+
   const [challengeSeq, setChallengeSeq] = useState<number>(1);
   const [submissionId, setSubmissionId] = useState<string>(() => {
     try {
@@ -66,6 +67,27 @@ export const App: React.FC = () => {
       return 'form';
     }
   });
+
+  // Verify stored submission against live Google Sheet on page load/refresh
+  useEffect(() => {
+    const savedId = localStorage.getItem(STORAGE_KEY_SUBMISSION_ID);
+    if (savedId) {
+      verifySubmissionApi(savedId)
+        .then((res) => {
+          if (res && res.valid === false) {
+            // Submission was deleted from Google Sheet: clear old status and open registration form
+            try {
+              localStorage.removeItem(STORAGE_KEY_SUBMISSION_ID);
+            } catch {}
+            setSubmissionId('');
+            setMode('form');
+          }
+        })
+        .catch((e) => {
+          console.warn('Live Google Sheet submission verification warning:', e);
+        });
+    }
+  }, []);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [topErrorBanner, setTopErrorBanner] = useState<string>('');
   const [reviewErrorBanner, setReviewErrorBanner] = useState<string>('');

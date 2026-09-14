@@ -197,3 +197,62 @@ export async function submitRegistrationApi(data: RegistrationFormData): Promise
     submissionId: `TK-${yyyy}${mm}${dd}-${randNum}`
   };
 }
+
+/**
+ * Checks whether a given submission ID is currently active in the Google Sheet.
+ * If the user/row was deleted from the Sheet, this returns { valid: false }.
+ */
+export async function verifySubmissionApi(submissionId: string): Promise<{ valid: boolean }> {
+  if (!submissionId || submissionId === '—' || submissionId.trim() === '') {
+    return { valid: false };
+  }
+
+  // 1. If running inside Google Apps Script (HTML Service)
+  if (typeof window !== 'undefined' && window.google?.script?.run) {
+    return new Promise((resolve) => {
+      try {
+        (window.google!.script!.run as any)
+          .withSuccessHandler((res: { valid: boolean }) => {
+            resolve({ valid: Boolean(res && res.valid) });
+          })
+          .withFailureHandler(() => {
+            resolve({ valid: false });
+          })
+          .verifySubmission(submissionId.trim());
+      } catch {
+        resolve({ valid: false });
+      }
+    });
+  }
+
+  // 2. If Web App URL is configured
+  const webAppUrl =
+    (typeof window !== 'undefined' && window.__TECHKEY_WEBAPP_URL__) ||
+    import.meta.env.VITE_APPS_SCRIPT_URL;
+
+  if (webAppUrl) {
+    try {
+      const url = new URL(webAppUrl);
+      url.searchParams.set('action', 'verifySubmission');
+      url.searchParams.set('submissionId', submissionId.trim());
+
+      const res = await fetch(url.toString(), {
+        method: 'GET',
+        mode: 'cors',
+        redirect: 'follow'
+      });
+
+      const text = await res.text();
+      const data = JSON.parse(text);
+      return { valid: Boolean(data && data.valid) };
+    } catch (err) {
+      console.warn('verifySubmissionApi network warning:', err);
+      // In case of network interruption, don't aggressively invalidate
+      return { valid: true };
+    }
+  }
+
+  // Local development fallback
+  return { valid: true };
+}
+
