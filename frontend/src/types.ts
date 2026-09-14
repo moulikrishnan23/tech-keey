@@ -47,6 +47,7 @@ export interface SubmissionPayload {
 export interface BackendResponse {
   status: 'success' | 'error';
   submissionId?: string;
+  isDuplicate?: boolean;
   message?: string;
 }
 

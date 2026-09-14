@@ -297,7 +297,11 @@ export const App: React.FC = () => {
 
     try {
       const response = await submitRegistrationApi(formData);
-      if (response && response.status === 'success' && response.submissionId) {
+      if (
+        response &&
+        (response.status === 'success' || (response.isDuplicate && response.submissionId)) &&
+        response.submissionId
+      ) {
         setSubmissionId(response.submissionId);
         try {
           localStorage.setItem(STORAGE_KEY_SUBMISSION_ID, response.submissionId);

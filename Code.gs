@@ -75,9 +75,21 @@ const MOBILE_REGEX = /^[6-9][0-9]{9}$/;
 /* ---------------------------------------------------------------------- */
 
 function doGet(e) {
-  if (e && e.parameter && e.parameter.action === 'ping') {
-    return ContentService.createTextOutput(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+  if (e && e.parameter) {
+    if (e.parameter.action === 'ping') {
+      return ContentService.createTextOutput(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (e.parameter.action === 'checkStatus') {
+      const email = String(e.parameter.email || '').trim().toLowerCase();
+      const mobile = String(e.parameter.mobile || '').replace(/\D/g, '');
+      const regNo = String(e.parameter.registrationNumber || e.parameter.regNo || '').trim().toLowerCase();
+
+      const result = findRegistrationRecord_(email, mobile, regNo);
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
   }
 
   // Check if React app output file exists, otherwise serve index.html
@@ -272,6 +284,42 @@ function syncSubmissionsToMaster_(masterSheet) {
   }
 }
 
+/**
+ * Helper to look up an existing registration in _Master_Registration_Log.
+ */
+function findRegistrationRecord_(email, mobile, regNo) {
+  try {
+    const masterSheet = getOrCreateMasterLogSheet_();
+    const lastRow = masterSheet.getLastRow();
+    if (lastRow <= 1) {
+      return { registered: false };
+    }
+
+    // Col 3: Submission ID, Col 6: Email ID, Col 7: Mobile Number, Col 8: Registration Number
+    const data = masterSheet.getRange(2, 3, lastRow - 1, 6).getValues();
+    for (let i = data.length - 1; i >= 0; i--) {
+      const rowSubId = String(data[i][0] || '');
+      const rowEmail = String(data[i][3] || '').trim().toLowerCase();
+      const rowMobile = String(data[i][4] || '').replace(/\D/g, '');
+      const rowRegNo = String(data[i][5] || '').trim().toLowerCase();
+
+      if ((email && rowEmail && rowEmail === email) ||
+          (mobile && rowMobile && rowMobile === mobile) ||
+          (regNo && rowRegNo && rowRegNo === regNo)) {
+        return {
+          registered: true,
+          status: 'success',
+          submissionId: rowSubId
+        };
+      }
+    }
+    return { registered: false };
+  } catch (err) {
+    console.error('findRegistrationRecord_ error: ' + err);
+    return { registered: false, error: String(err) };
+  }
+}
+
 /* ---------------------------------------------------------------------- */
 /* Public entry point called from frontend (google.script.run or doPost)  */
 /* ---------------------------------------------------------------------- */
@@ -305,7 +353,7 @@ function submitRegistration(payload) {
       const sheet = getOrCreateSheet_();
       const masterSheet = getOrCreateMasterLogSheet_();
 
-      // Check for duplicate registration against permanent master log (Optimized with CacheService)
+      // Check for duplicate registration against permanent master log
       const duplicateCheck = checkDuplicateRegistration_(
         masterSheet,
         clean.userType,
@@ -317,6 +365,8 @@ function submitRegistration(payload) {
       if (duplicateCheck.isDuplicate) {
         return {
           status: 'error',
+          isDuplicate: true,
+          submissionId: duplicateCheck.submissionId || '',
           message: duplicateCheck.message
         };
       }
@@ -369,11 +419,6 @@ function submitRegistration(payload) {
       const newMasterRow = masterSheet.getLastRow();
       masterSheet.getRange(newMasterRow, 1, 1, 2).setNumberFormats([['0', '@']]);
       masterSheet.getRange(newMasterRow, 7, 1, 1).setNumberFormat('@');
-
-      // 3. Update cache with new user's identifiers
-      if (typeof duplicateCheck.updateCache === 'function') {
-        duplicateCheck.updateCache();
-      }
       
     } finally {
       lock.releaseLock();
@@ -396,98 +441,54 @@ function submitRegistration(payload) {
 /**
  * Checks permanent master sheet data for duplicate registrations.
  * Validates Email ID (all), Mobile Number (all), and Registration Number (students).
- * OPTIMIZATION: Uses CacheService to bypass slow full-table scans.
  */
 function checkDuplicateRegistration_(masterSheet, userType, email, registrationNumber, mobile) {
-  const cache = CacheService.getScriptCache();
-  const cacheKey = 'tk_master_registered_v3';
-  
   const normEmail = String(email || '').trim().toLowerCase();
   const normRegNo = String(registrationNumber || '').trim().toLowerCase();
   const normMobile = String(mobile || '').replace(/\D/g, ''); // Extract digits
   const isStudent = userType === 'Student';
   
-  let emailSet = null;
-  let regNoSet = null;
-  let mobileSet = null;
+  const lastRow = masterSheet.getLastRow();
+  if (lastRow > 1) {
+    // In masterSheet: Col 3: Submission ID, Col 6: Email ID, Col 7: Mobile Number, Col 8: Registration Number
+    const data = masterSheet.getRange(2, 3, lastRow - 1, 6).getValues();
+    for (let i = data.length - 1; i >= 0; i--) {
+      const subId = String(data[i][0] || '');
+      const em = String(data[i][3] || '').trim().toLowerCase();
+      const mob = String(data[i][4] || '').replace(/\D/g, '');
+      const reg = String(data[i][5] || '').trim().toLowerCase();
 
-  // Try to load from high-speed cache
-  const cachedData = cache.get(cacheKey);
-  if (cachedData) {
-    try {
-      const parsed = JSON.parse(cachedData);
-      emailSet = new Set(parsed.emails || []);
-      regNoSet = new Set(parsed.regNos || []);
-      mobileSet = new Set(parsed.mobiles || []);
-    } catch (e) {
-      // Ignore parse errors, will rebuild cache
-    }
-  }
+      // 1. Check Email duplicate
+      if (normEmail && em && em === normEmail) {
+        return {
+          isDuplicate: true,
+          submissionId: subId,
+          message: 'You have already registered for this hackathon using this Email ID. Duplicate registration is not allowed.'
+        };
+      }
 
-  // If cache is empty or expired, rebuild it from the master sheet
-  if (!emailSet || !regNoSet || !mobileSet) {
-    emailSet = new Set();
-    regNoSet = new Set();
-    mobileSet = new Set();
-    const lastRow = masterSheet.getLastRow();
-    
-    if (lastRow > 1) {
-      // In masterSheet: Col 6: Email ID, Col 7: Mobile Number, Col 8: Registration Number
-      const data = masterSheet.getRange(2, 6, lastRow - 1, 3).getValues();
-      for (let i = 0; i < data.length; i++) {
-        const em = String(data[i][0] || '').trim().toLowerCase();
-        const mob = String(data[i][1] || '').replace(/\D/g, '');
-        const reg = String(data[i][2] || '').trim().toLowerCase();
+      // 2. Check Mobile duplicate
+      if (normMobile && mob && mob === normMobile) {
+        return {
+          isDuplicate: true,
+          submissionId: subId,
+          message: 'You have already registered for this hackathon using this Mobile Number. Duplicate registration is not allowed.'
+        };
+      }
 
-        if (em) emailSet.add(em);
-        if (mob) mobileSet.add(mob);
-        if (reg) regNoSet.add(reg);
+      // 3. Check Registration Number duplicate (students only)
+      if (isStudent && normRegNo && reg && reg === normRegNo) {
+        return {
+          isDuplicate: true,
+          submissionId: subId,
+          message: 'You have already registered for this hackathon using this Registration Number. Duplicate registration is not allowed.'
+        };
       }
     }
-  }
-
-  // 1. Check Email duplicate
-  if (normEmail && emailSet.has(normEmail)) {
-    return {
-      isDuplicate: true,
-      message: 'You have already registered for this hackathon using this Email ID. Duplicate registration is not allowed.'
-    };
-  }
-
-  // 2. Check Mobile duplicate
-  if (normMobile && mobileSet.has(normMobile)) {
-    return {
-      isDuplicate: true,
-      message: 'You have already registered for this hackathon using this Mobile Number. Duplicate registration is not allowed.'
-    };
-  }
-
-  // 3. Check Registration Number duplicate (students only)
-  if (isStudent && normRegNo && regNoSet.has(normRegNo)) {
-    return {
-      isDuplicate: true,
-      message: 'You have already registered for this hackathon using this Registration Number. Duplicate registration is not allowed.'
-    };
   }
 
   return { 
-    isDuplicate: false,
-    updateCache: function() {
-      if (normEmail) emailSet.add(normEmail);
-      if (normMobile) mobileSet.add(normMobile);
-      if (isStudent && normRegNo) regNoSet.add(normRegNo);
-
-      // Store in cache for 6 hours (21600 seconds)
-      try {
-        cache.put(cacheKey, JSON.stringify({
-          emails: Array.from(emailSet),
-          mobiles: Array.from(mobileSet),
-          regNos: Array.from(regNoSet)
-        }), 21600);
-      } catch (e) {
-        console.warn('Cache write warning: ' + e);
-      }
-    }
+    isDuplicate: false
   };
 }
 

@@ -73,6 +73,8 @@ export async function submitRegistrationApi(data: RegistrationFormData): Promise
             } else {
               resolve({
                 status: 'error',
+                isDuplicate: response?.isDuplicate,
+                submissionId: response?.submissionId,
                 message: response?.message || 'Submission was rejected by the server.'
               });
             }
@@ -108,7 +110,7 @@ export async function submitRegistrationApi(data: RegistrationFormData): Promise
         mode: 'cors',
         redirect: 'follow',
         headers: {
-          'Content-Type': 'text/plain;charset=utf-8' // Text/plain avoids pre-flight CORS in Apps Script
+          'Content-Type': 'text/plain' // Plain text avoids CORS pre-flight in Apps Script
         },
         body: JSON.stringify(payload)
       });
@@ -131,7 +133,40 @@ export async function submitRegistrationApi(data: RegistrationFormData): Promise
 
       return result;
     } catch (err) {
-      console.error('Fetch submission error:', err);
+      console.warn('Fetch POST submission warning/error, attempting fallback verification:', err);
+
+      // FALLBACK VERIFICATION:
+      // In cross-origin Apps Script POST requests, some browsers drop the 302 redirect response
+      // even after Apps Script has successfully received and saved the data.
+      // We check via GET whether the submission was actually recorded in Google Sheets.
+      try {
+        const checkUrl = new URL(webAppUrl);
+        checkUrl.searchParams.set('action', 'checkStatus');
+        checkUrl.searchParams.set('email', data.email.trim());
+        checkUrl.searchParams.set('mobile', data.mobile.trim());
+        if (data.userType === 'Student' && data.registrationNumber) {
+          checkUrl.searchParams.set('regNo', data.registrationNumber.trim());
+        }
+
+        const checkRes = await fetch(checkUrl.toString(), {
+          method: 'GET',
+          mode: 'cors',
+          redirect: 'follow'
+        });
+
+        const checkText = await checkRes.text();
+        const checkData = JSON.parse(checkText);
+
+        if (checkData && checkData.registered && checkData.submissionId) {
+          return {
+            status: 'success',
+            submissionId: checkData.submissionId
+          };
+        }
+      } catch (verifyErr) {
+        console.warn('Fallback verification also failed:', verifyErr);
+      }
+
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS')) {
         return {
