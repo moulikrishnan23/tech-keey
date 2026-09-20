@@ -11,10 +11,13 @@ import { ChallengesStep } from './components/ChallengesStep';
 import { RemarksStep } from './components/RemarksStep';
 import { ReviewSection } from './components/ReviewSection';
 import { SuccessSection } from './components/SuccessSection';
+import { RegistrationClosedSection } from './components/RegistrationClosedSection';
+import { CountdownTimer } from './components/CountdownTimer';
 import { VerticalMarquee } from './components/VerticalMarquee';
 import { RegistrationFormData, ValidationErrors, YearOfStudy } from './types';
 import { EducationLevelOption } from './data/academicCourses';
 import { validateForm } from './utils/validation';
+import { isRegistrationClosed } from './utils/deadline';
 import { submitRegistrationApi, verifySubmissionApi } from './services/api';
 
 const initialFormData: RegistrationFormData = {
@@ -53,7 +56,7 @@ export const App: React.FC = () => {
 
   const [challengeSeq, setChallengeSeq] = useState<number>(1);
   const [submissionId, setSubmissionId] = useState<string>('');
-  const [mode, setMode] = useState<'form' | 'review' | 'success' | 'checking'>('checking');
+  const [mode, setMode] = useState<'form' | 'review' | 'success' | 'checking' | 'closed'>('checking');
 
   // Verify stored submission against live Google Sheet on page load/refresh
   useEffect(() => {
@@ -65,14 +68,14 @@ export const App: React.FC = () => {
             setSubmissionId(savedId);
             setMode('success');
           } else {
-            // Submission was deleted from Google Sheet: clear old status and open registration form
+            // Submission was deleted from Google Sheet: clear old status
             try {
               localStorage.removeItem(STORAGE_KEY_SUBMISSION_ID);
               localStorage.removeItem(STORAGE_KEY_FORM_DRAFT);
             } catch {}
             setSubmissionId('');
             setFormData(initialFormData);
-            setMode('form');
+            setMode(isRegistrationClosed() ? 'closed' : 'form');
           }
         })
         .catch(() => {
@@ -80,12 +83,32 @@ export const App: React.FC = () => {
             localStorage.removeItem(STORAGE_KEY_SUBMISSION_ID);
           } catch {}
           setSubmissionId('');
-          setMode('form');
+          setMode(isRegistrationClosed() ? 'closed' : 'form');
         });
     } else {
-      setMode('form');
+      setMode(isRegistrationClosed() ? 'closed' : 'form');
     }
   }, []);
+
+  // Live listener to transition to closed state immediately if deadline passes while browsing
+  useEffect(() => {
+    if (mode === 'success' || mode === 'closed') return;
+
+    if (isRegistrationClosed()) {
+      setMode('closed');
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (isRegistrationClosed()) {
+        setMode('closed');
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [mode]);
+
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [topErrorBanner, setTopErrorBanner] = useState<string>('');
   const [reviewErrorBanner, setReviewErrorBanner] = useState<string>('');
@@ -305,6 +328,12 @@ export const App: React.FC = () => {
   const handleSubmit = async () => {
     if (submitting) return;
 
+    if (isRegistrationClosed()) {
+      setReviewErrorBanner('Registration for TechKeey is now closed (Deadline: 21 September 2026, 12:00 AM IST). Submissions are no longer accepted.');
+      setMode('closed');
+      return;
+    }
+
     const { isValid, errors: validationErrors } = validateForm(formData);
     if (!isValid) {
       setErrors(validationErrors);
@@ -351,7 +380,7 @@ export const App: React.FC = () => {
     } catch {}
     setFormData(initialFormData);
     setChallengeSeq(1);
-    setMode('form');
+    setMode(isRegistrationClosed() ? 'closed' : 'form');
     setErrors({});
     setTopErrorBanner('');
     setReviewErrorBanner('');
@@ -420,6 +449,9 @@ export const App: React.FC = () => {
   return (
     <>
       <VerticalMarquee />
+      {(mode === 'form' || mode === 'review') && (
+        <CountdownTimer onDeadlineReached={() => setMode('closed')} />
+      )}
       <div className="wrap">
         <Topbar />
 
@@ -431,7 +463,15 @@ export const App: React.FC = () => {
                 <p style={{ color: '#6b7280', fontSize: '15px' }}>Verifying registration status...</p>
               </div>
             </div>
-          ) : mode !== 'success' ? (
+          ) : mode === 'closed' ? (
+            <div className="closed-page-wrapper">
+              <RegistrationClosedSection />
+            </div>
+          ) : mode === 'success' ? (
+            <div className="success-page-wrapper">
+              <SuccessSection submissionId={submissionId} onRestart={handleRestart} />
+            </div>
+          ) : (
             <>
               <Hero />
               <InfoPanel />
@@ -497,10 +537,6 @@ export const App: React.FC = () => {
                 </div>
               )}
             </>
-          ) : (
-            <div className="success-page-wrapper">
-              <SuccessSection submissionId={submissionId} onRestart={handleRestart} />
-            </div>
           )}
         </main>
 

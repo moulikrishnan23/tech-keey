@@ -54,6 +54,8 @@ export interface HackathonConfig {
   social: {
     instagramUrl: string;
     instagramHandle: string;
+    linkedinUrl?: string;
+    linkedinHandle?: string;
     notificationMessage: string;
   };
   marquee: MarqueeItem[];
@@ -124,6 +126,8 @@ export const HACKATHON_CONFIG: HackathonConfig = {
   social: {
     instagramUrl: 'https://www.instagram.com/lesuccess_official?stkn=cDR6YWRqdzU1aTVo',
     instagramHandle: 'LeSuccess Official Instagram',
+    linkedinUrl: 'https://www.linkedin.com/company/lesuccess',
+    linkedinHandle: 'LeSuccess Official LinkedIn',
     notificationMessage:
       'Notifications / announcements will be posted on our Instagram page. Kindly follow our Instagram page for updates.',
   },

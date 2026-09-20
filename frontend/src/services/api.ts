@@ -1,4 +1,5 @@
 import { BackendResponse, RegistrationFormData, SubmissionPayload } from '../types';
+import { isRegistrationClosed } from '../utils/deadline';
 
 declare global {
   interface Window {
@@ -60,6 +61,13 @@ export function formatPayload(data: RegistrationFormData): SubmissionPayload {
 }
 
 export async function submitRegistrationApi(data: RegistrationFormData): Promise<BackendResponse> {
+  if (isRegistrationClosed()) {
+    return {
+      status: 'error',
+      message: 'Registration for TechKeey is now closed (Deadline: 21 September 2026, 12:00 AM IST). Submissions are no longer accepted.'
+    };
+  }
+
   const payload = formatPayload(data);
 
   // 1. If running inside Google Apps Script (HTML Service)

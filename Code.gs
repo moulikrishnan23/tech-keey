@@ -57,6 +57,10 @@ const NAME_REGEX = /^[A-Za-z][A-Za-z.\s]*$/;
 const EMAIL_REGEX = /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
 const MOBILE_REGEX = /^[6-9][0-9]{9}$/;
 
+// Registration Cutoff: 21 September 2026, 12:00:00 AM IST (Midnight / UTC+5:30)
+const REGISTRATION_DEADLINE_ISO = '2026-09-21T00:00:00+05:30';
+const REGISTRATION_DEADLINE_MS = new Date(REGISTRATION_DEADLINE_ISO).getTime();
+
 /* ---------------------------------------------------------------------- */
 /* Web app entry points                                                   */
 /* ---------------------------------------------------------------------- */
@@ -269,6 +273,15 @@ function findRegistrationInSheet_(email, mobile, regNo) {
 
 function submitRegistration(payload) {
   try {
+    // Cutoff check: 21 September 2026, 12:00:00 AM IST
+    if (new Date().getTime() >= REGISTRATION_DEADLINE_MS) {
+      return {
+        status: 'error',
+        isClosed: true,
+        message: 'Registration for TechKeey is now closed (Deadline: 21 September 2026, 12:00 AM IST). Submissions are no longer accepted.'
+      };
+    }
+
     const validation = validatePayload_(payload);
 
     if (!validation.valid) {
