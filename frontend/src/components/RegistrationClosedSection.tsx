@@ -93,7 +93,7 @@ export const RegistrationClosedSection: React.FC = () => {
                 lineHeight: '1.75',
               }}
             >
-              <li>Finalists and instructions will be announced on our Instagram. Follow us to stay updated.</li>
+              <li>Finalist and instructions will be announced on our Instagram. Follow us to stay updated.</li>
               <li>For further updates, please follow us on Instagram.</li>
               <li>Want to participate in more events like this? Follow us on Instagram and LinkedIn for future events and opportunities.</li>
             </ul>
